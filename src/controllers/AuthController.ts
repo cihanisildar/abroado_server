@@ -9,6 +9,7 @@ import {
   UpdateProfileSchema,
   validateRequest 
 } from '../types';
+import { getAuthenticatedUserId } from '../utils/authHelpers';
 import * as s3Service from '../services/S3Service';
 
 const getCookieOptions = (isProduction: boolean): CookieOptions => {
@@ -144,7 +145,7 @@ export const refresh = async (req: Request, res: Response): Promise<void> => {
 
 export const logout = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.user!.id;
+    const userId = getAuthenticatedUserId(req);
     await authService.logout(prisma, userId);
     
     const isProduction = process.env.NODE_ENV === 'production';
@@ -162,7 +163,7 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
 
 export const getProfile = async (req: Request, res: Response): Promise<void> => {
   try {
-    const user = await authService.getProfile(prisma, req.user!.id);
+    const user = await authService.getProfile(prisma, getAuthenticatedUserId(req));
 
     res.json(createSuccessResponse('Profile retrieved successfully', user));
   } catch (error) {
@@ -176,7 +177,7 @@ export const getProfile = async (req: Request, res: Response): Promise<void> => 
 
 export const updateProfile = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.user!.id;
+    const userId = getAuthenticatedUserId(req);
 
     const validation = validateRequest(UpdateProfileSchema, req.body);
     if (!validation.success) {

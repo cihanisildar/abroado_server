@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma } from '../index';
 import * as roomService from '../services/RoomService';
+import { getAuthenticatedUserId, getOptionalAuthenticatedUserId } from '../utils/authHelpers';
 import { 
   createSuccessResponse, 
   createErrorResponse, 
@@ -27,7 +28,7 @@ export const createRoom = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    const room = await roomService.createRoom(prisma, req.user.id, validation.data as any);
+    const room = await roomService.createRoom(prisma, getAuthenticatedUserId(req), validation.data as any);
 
     res.status(201).json(createSuccessResponse('Room created successfully', { ...room, onlineMembers: [] }));
   } catch (error) {
@@ -43,7 +44,7 @@ export const getRooms = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const userId = req.user?.id;
+    const userId = getOptionalAuthenticatedUserId(req);
     const result = await roomService.getRooms(prisma, queryValidation.data as any, userId);
 
     res.json(createPaginatedResponse(result.rooms, result.pagination));
@@ -63,7 +64,7 @@ export const getRoomById = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    const userId = req.user?.id;
+    const userId = getOptionalAuthenticatedUserId(req);
     const { id } = paramsValidation.data as { id: string };
     const room = await roomService.getRoomById(prisma, id, userId);
 
@@ -96,7 +97,7 @@ export const joinRoom = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    await roomService.joinRoom(prisma, req.user.id, (paramsValidation.data as { id: string }).id);
+    await roomService.joinRoom(prisma, getAuthenticatedUserId(req), (paramsValidation.data as { id: string }).id);
 
     res.json(createSuccessResponse('Joined room successfully', null));
   } catch (error) {
@@ -117,7 +118,7 @@ export const leaveRoom = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    await roomService.leaveRoom(prisma, req.user.id, (paramsValidation.data as { id: string }).id);
+    await roomService.leaveRoom(prisma, getAuthenticatedUserId(req), (paramsValidation.data as { id: string }).id);
 
     res.json(createSuccessResponse('Left room successfully', null));
   } catch (error) {
@@ -144,7 +145,7 @@ export const getMessages = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    const result = await roomService.getMessages(prisma, (paramsValidation.data as { id: string }).id, req.user.id, queryValidation.data);
+    const result = await roomService.getMessages(prisma, (paramsValidation.data as { id: string }).id, getAuthenticatedUserId(req), queryValidation.data);
 
     res.json(createPaginatedResponse(result.messages, result.pagination));
   } catch (error) {
@@ -164,7 +165,7 @@ export const getRoomsWithMembersAndMessages = async (req: Request, res: Response
       return;
     }
 
-    const userId = req.user?.id;
+    const userId = getOptionalAuthenticatedUserId(req);
     const result = await roomService.getRoomsWithMembersAndMessages(prisma, queryValidation.data as any, userId);
 
     res.json(createPaginatedResponse(result.rooms, result.pagination));
@@ -191,7 +192,7 @@ export const sendMessage = async (req: Request, res: Response): Promise<void> =>
     }
     const message = await roomService.sendMessage(
       prisma,
-      req.user.id,
+      getAuthenticatedUserId(req),
       (paramsValidation.data as { id: string }).id,
       { content }
     );

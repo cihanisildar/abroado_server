@@ -3,6 +3,7 @@ import * as authController from '../controllers/AuthController';
 import { authenticateToken } from '../middleware/auth';
 import { authLimiter, uploadLimiter } from '../middleware/rateLimiter';
 import { avatarUpload } from '../middleware/upload';
+import googleAuthRoutes from './googleAuthRoutes';
 
 
 const router = Router();
@@ -228,5 +229,8 @@ router.get('/profile', authenticateToken, authController.getProfile);
  *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.put('/profile', authenticateToken, avatarUpload.single('avatar'), authController.updateProfile);
+
+// Google OAuth routes
+router.use('/', googleAuthRoutes);
 
 export default router; 

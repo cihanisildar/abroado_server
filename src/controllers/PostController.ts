@@ -3,6 +3,7 @@ import { prisma } from '../index';
 import * as postService from '../services/PostService';
 import { findById as findCityById, getAllCountries } from '../repositories/CityRepository';
 import * as s3Service from '../services/S3Service';
+import { getAuthenticatedUserId, getOptionalAuthenticatedUserId } from '../utils/authHelpers';
 import { 
   createSuccessResponse, 
   createErrorResponse, 
@@ -95,7 +96,7 @@ export const createPost = async (req: Request, res: Response): Promise<void> => 
         ...(finalCityId && { cityId: finalCityId }),
         category: rest.category ?? 'DISCUSSION'
       };
-      const tempPost = await postService.createPost(prisma, req.user.id, tempPostData);
+      const tempPost = await postService.createPost(prisma, getAuthenticatedUserId(req), tempPostData);
       
       // Upload images to S3
       imageUrls = await Promise.all(
@@ -103,7 +104,7 @@ export const createPost = async (req: Request, res: Response): Promise<void> => 
       );
       
       // Update post with image URLs
-      const finalPost = await postService.updatePost(prisma, req.user.id, tempPost.id, { images: imageUrls });
+      const finalPost = await postService.updatePost(prisma, getAuthenticatedUserId(req), tempPost.id, { images: imageUrls });
       res.status(201).json(createSuccessResponse('Post created successfully', finalPost));
     } else {
       // No images, create post normally
@@ -112,7 +113,7 @@ export const createPost = async (req: Request, res: Response): Promise<void> => 
         ...(finalCityId && { cityId: finalCityId }),
         category: rest.category ?? 'DISCUSSION'
       };
-      const post = await postService.createPost(prisma, req.user.id, postDataWithCity);
+      const post = await postService.createPost(prisma, getAuthenticatedUserId(req), postDataWithCity);
       res.status(201).json(createSuccessResponse('Post created successfully', post));
     }
   } catch (error) {
@@ -128,7 +129,7 @@ export const getPosts = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const userId = req.user?.id;
+    const userId = getOptionalAuthenticatedUserId(req);
     const result = await postService.getPosts(prisma, queryValidation.data as any, userId);
 
     res.json(createPaginatedResponse(result.posts, result.pagination));
@@ -145,7 +146,7 @@ export const getPostById = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    const userId = req.user?.id;
+    const userId = getOptionalAuthenticatedUserId(req);
     const { id } = paramsValidation.data as { id: string };
     const post = await postService.getPostById(prisma, id, userId);
 
@@ -172,7 +173,7 @@ export const upvotePost = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    await postService.votePost(prisma, req.user.id, (paramsValidation.data as { id: string }).id, 'UPVOTE');
+    await postService.votePost(prisma, getAuthenticatedUserId(req), (paramsValidation.data as { id: string }).id, 'UPVOTE');
 
     res.json(createSuccessResponse('Post upvoted successfully', null));
   } catch (error) {
@@ -193,7 +194,7 @@ export const downvotePost = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    await postService.votePost(prisma, req.user.id, (paramsValidation.data as { id: string }).id, 'DOWNVOTE');
+    await postService.votePost(prisma, getAuthenticatedUserId(req), (paramsValidation.data as { id: string }).id, 'DOWNVOTE');
 
     res.json(createSuccessResponse('Post downvoted successfully', null));
   } catch (error) {
@@ -214,7 +215,7 @@ export const removeVote = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    await postService.removeVote(prisma, req.user.id, (paramsValidation.data as { id: string }).id);
+    await postService.removeVote(prisma, getAuthenticatedUserId(req), (paramsValidation.data as { id: string }).id);
 
     res.json(createSuccessResponse('Vote removed successfully', null));
   } catch (error) {
@@ -235,7 +236,7 @@ export const savePost = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    await postService.savePost(prisma, req.user.id, (paramsValidation.data as { id: string }).id);
+    await postService.savePost(prisma, getAuthenticatedUserId(req), (paramsValidation.data as { id: string }).id);
 
     res.json(createSuccessResponse('Post saved successfully', null));
   } catch (error) {
@@ -256,7 +257,7 @@ export const unsavePost = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    await postService.unsavePost(prisma, req.user.id, (paramsValidation.data as { id: string }).id);
+    await postService.unsavePost(prisma, getAuthenticatedUserId(req), (paramsValidation.data as { id: string }).id);
 
     res.json(createSuccessResponse('Post unsaved successfully', null));
   } catch (error) {
@@ -283,7 +284,7 @@ export const addComment = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    const comment = await postService.addComment(prisma, req.user.id, (paramsValidation.data as { id: string }).id, bodyValidation.data);
+    const comment = await postService.addComment(prisma, getAuthenticatedUserId(req), (paramsValidation.data as { id: string }).id, bodyValidation.data);
 
     res.status(201).json(createSuccessResponse('Comment added successfully', comment));
   } catch (error) {
@@ -299,7 +300,7 @@ export const getPostsWithComments = async (req: Request, res: Response): Promise
       return;
     }
 
-    const userId = req.user?.id;
+    const userId = getOptionalAuthenticatedUserId(req);
     const result = await postService.getPostsWithComments(prisma, queryValidation.data as any, userId);
 
     res.json(createPaginatedResponse(result.posts, result.pagination));
@@ -316,7 +317,7 @@ export const getPostComments = async (req: Request, res: Response): Promise<void
       return;
     }
 
-    const userId = req.user?.id;
+    const userId = getOptionalAuthenticatedUserId(req);
     const result = await postService.getPostComments(prisma, (paramsValidation.data as { id: string }).id, req.query, userId);
 
     res.json(createPaginatedResponse(result.comments, result.pagination));
@@ -381,7 +382,7 @@ export const updatePost = async (req: Request, res: Response): Promise<void> => 
       }
     }
     
-    const post = await postService.updatePost(prisma, req.user.id, id, updateData);
+    const post = await postService.updatePost(prisma, getAuthenticatedUserId(req), id, updateData);
 
     res.json(createSuccessResponse('Post updated successfully', post));
   } catch (error) {
@@ -417,7 +418,7 @@ export const deletePost = async (req: Request, res: Response): Promise<void> => 
     }
 
     const { id } = paramsValidation.data as { id: string };
-    await postService.deletePost(prisma, req.user.id, id);
+    await postService.deletePost(prisma, getAuthenticatedUserId(req), id);
 
     res.json(createSuccessResponse('Post deleted successfully', null));
   } catch (error) {
@@ -459,12 +460,12 @@ export const uploadImages = async (req: Request, res: Response): Promise<void> =
     }
 
     // Verify post belongs to user (only owner can add images)
-    const post = await postService.getPostById(prisma, id, req.user.id);
+    const post = await postService.getPostById(prisma, id, getAuthenticatedUserId(req));
     if (!post) {
       res.status(404).json(createErrorResponse('Post not found'));
       return;
     }
-    if ((post as any).userId && (post as any).userId !== req.user.id) {
+    if ((post as any).userId && (post as any).userId !== getAuthenticatedUserId(req)) {
       res.status(403).json(createErrorResponse('Unauthorized'));
       return;
     }
@@ -476,7 +477,7 @@ export const uploadImages = async (req: Request, res: Response): Promise<void> =
 
     // Append to existing images
     const existingImages: string[] = Array.isArray((post as any).images) ? (post as any).images : [];
-    const updatedPost = await postService.updatePost(prisma, req.user.id, id, { images: [...existingImages, ...uploadedUrls] } as any);
+    const updatedPost = await postService.updatePost(prisma, getAuthenticatedUserId(req), id, { images: [...existingImages, ...uploadedUrls] } as any);
 
     res.json(createSuccessResponse('Images uploaded successfully', { images: uploadedUrls, post: updatedPost }));
   } catch (error) {

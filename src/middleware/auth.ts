@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../index';
 import * as authService from '../services/AuthService';
+import { getAuthenticatedUserRole } from '../utils/authHelpers';
 
 export const authenticateToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   // Try to get token from cookie first, then fallback to Authorization header
@@ -95,7 +96,7 @@ export const requireRole = (roles: string[]) => {
       return;
     }
 
-    if (!roles.includes(req.user.role)) {
+    if (!roles.includes(getAuthenticatedUserRole(req))) {
       res.status(403).json({
         success: false,
         message: 'Insufficient permissions'

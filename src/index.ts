@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
+import passport from 'passport';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { PrismaClient } from '@prisma/client';
@@ -18,6 +19,7 @@ import routes from './routes';
 
 // Import services
 import { initializeSocket } from './services/SocketService';
+import GoogleOAuthService from './services/GoogleOAuthService';
 
 // Import Swagger configuration
 import { swaggerSpec } from './config/swagger';
@@ -52,6 +54,9 @@ console.log('✅ Environment variables loaded successfully');
 
 // Initialize Prisma client
 export const prisma = new PrismaClient();
+
+// Initialize Google OAuth service
+GoogleOAuthService.getInstance(prisma);
 
 const app = express();
 app.set('trust proxy', 1); // Trust first proxy (needed for rate limiting behind load balancers)
@@ -168,6 +173,7 @@ app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json({ limit: '1mb' })); // Reduced from 10mb
 app.use(express.urlencoded({ extended: true, limit: '1mb' })); // Reduced from 10mb
+app.use(passport.initialize());
 app.use(requestLogger);
 app.use(generalLimiter);
 

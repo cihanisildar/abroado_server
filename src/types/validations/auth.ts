@@ -26,6 +26,27 @@ export const LoginSchema = z.object({
   password: z.string().min(1, 'Password is required')
 });
 
+export const GoogleProfileSchema = z.object({
+  id: z.string(),
+  displayName: z.string(),
+  name: z.object({
+    familyName: z.string(),
+    givenName: z.string()
+  }),
+  emails: z.array(z.object({
+    value: z.string().email(),
+    verified: z.boolean().optional()
+  })),
+  photos: z.array(z.object({
+    value: z.string().url()
+  })).optional()
+});
+
+export const LinkGoogleAccountSchema = z.object({
+  googleId: z.string().min(1, 'Google ID is required'),
+  avatar: z.string().url().optional()
+});
+
 export const UpdateProfileSchema = z.object({
   username: z.string()
     .min(2, 'Username must be at least 2 characters')
@@ -67,4 +88,6 @@ export const UpdateProfileSchema = z.object({
 // Infer types from auth schemas
 export type RegisterDto = z.infer<typeof RegisterSchema>;
 export type LoginDto = z.infer<typeof LoginSchema>;
-export type UpdateUserDto = z.infer<typeof UpdateProfileSchema>; 
+export type UpdateUserDto = z.infer<typeof UpdateProfileSchema>;
+export type GoogleProfileDto = z.infer<typeof GoogleProfileSchema>;
+export type LinkGoogleAccountDto = z.infer<typeof LinkGoogleAccountSchema>; 

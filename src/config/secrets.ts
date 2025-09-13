@@ -7,6 +7,9 @@ interface SecretsConfig {
   JWT_REFRESH_EXPIRES_IN?: string;
   BCRYPT_ROUNDS: number;
   SESSION_SECRET?: string;
+  GOOGLE_CLIENT_ID?: string;
+  GOOGLE_CLIENT_SECRET?: string;
+  GOOGLE_CALLBACK_URL?: string;
 }
 
 class SecretsManager {
@@ -39,6 +42,17 @@ class SecretsManager {
     }
     if (process.env.SESSION_SECRET) {
       config.SESSION_SECRET = process.env.SESSION_SECRET;
+    }
+    if (process.env.GOOGLE_CLIENT_ID) {
+      config.GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+    }
+    if (process.env.GOOGLE_CLIENT_SECRET) {
+      config.GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+    }
+    if (process.env.GOOGLE_CALLBACK_URL) {
+      config.GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL;
+    } else if (process.env.NODE_ENV === 'development') {
+      config.GOOGLE_CALLBACK_URL = 'http://localhost:3001/api/auth/google/callback';
     }
 
     return config;
@@ -108,6 +122,18 @@ class SecretsManager {
     return this.secrets.SESSION_SECRET;
   }
 
+  public get googleClientId(): string | undefined {
+    return this.secrets.GOOGLE_CLIENT_ID;
+  }
+
+  public get googleClientSecret(): string | undefined {
+    return this.secrets.GOOGLE_CLIENT_SECRET;
+  }
+
+  public get googleCallbackUrl(): string | undefined {
+    return this.secrets.GOOGLE_CALLBACK_URL;
+  }
+
   // Utility methods
   public generateSecret(length: number = 64): string {
     return crypto.randomBytes(length).toString('base64');
@@ -143,7 +169,10 @@ export const {
   jwtRefreshSecret,
   jwtRefreshExpiresIn,
   bcryptRounds,
-  sessionSecret
+  sessionSecret,
+  googleClientId,
+  googleClientSecret,
+  googleCallbackUrl
 } = secretsManager;
 
 // Export secret generation utilities

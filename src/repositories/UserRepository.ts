@@ -7,6 +7,7 @@ const USER_SELECT_PUBLIC = {
   username: true,
   email: true,
   role: true,
+  googleId: true,
   currentCity: true,
   currentCountry: true,
   targetCountry: true,
@@ -292,23 +293,37 @@ export const findByEmail = async (prisma: PrismaClient, email: string) => {
 };
 
 export const findByGoogleId = async (prisma: PrismaClient, googleId: string) => {
-  // Google authentication not supported in current schema
-  return null;
+  if (!googleId || typeof googleId !== 'string') {
+    throw new Error('Invalid Google ID');
+  }
+
+  try {
+    return await prisma.user.findUnique({
+      where: { googleId },
+      select: USER_SELECT_WITH_PASSWORD
+    });
+  } catch (error) {
+    console.error('Error fetching user by Google ID:', error);
+    throw new Error('Failed to fetch user by Google ID');
+  }
 };
 
 export const create = async (prisma: PrismaClient, userData: CreateUserData) => {
   if (!userData.email || !userData.username) {
     throw new Error('Email and username are required');
   }
-  if (!userData.password) {
-    throw new Error('Password is required');
+  
+  // Password is required only for regular registration, not for Google OAuth
+  if (!userData.password && !userData.googleId) {
+    throw new Error('Password is required for non-OAuth registration');
   }
 
   try {
     const data: Prisma.UserCreateInput = {
       username: userData.username,
       email: userData.email.toLowerCase(),
-      password: userData.password,
+      ...(userData.password && { password: userData.password }),
+      ...(userData.googleId && { googleId: userData.googleId }),
       ...(userData.role && { role: userData.role }),
       ...(userData.currentCity && { currentCity: userData.currentCity }),
       ...(userData.currentCountry && { currentCountry: userData.currentCountry }),
@@ -411,6 +426,43 @@ export const linkGoogleAccount = async (
   googleId: string, 
   avatar?: string
 ) => {
-  // Google authentication not supported in current schema
-  throw new Error('Google authentication not supported');
+  if (!id || !googleId) {
+    throw new Error('User ID and Google ID are required');
+  }
+
+  try {
+    const updateData: Prisma.UserUpdateInput = {
+      googleId,
+      updatedAt: new Date()
+    };
+
+    // Only update avatar if provided and user doesn't already have one
+    if (avatar) {
+      const existingUser = await prisma.user.findUnique({
+        where: { id },
+        select: { avatar: true }
+      });
+
+      if (!existingUser?.avatar) {
+        updateData.avatar = avatar;
+      }
+    }
+
+    return await prisma.user.update({
+      where: { id },
+      data: updateData,
+      select: USER_SELECT_PUBLIC
+    });
+  } catch (error) {
+    console.error('Error linking Google account:', error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        throw new Error('This Google account is already linked to another user');
+      }
+      if (error.code === 'P2025') {
+        throw new Error('User not found');
+      }
+    }
+    throw new Error('Failed to link Google account');
+  }
 }; 

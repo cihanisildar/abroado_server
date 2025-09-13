@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import * as cityService from '../services/CityService';
 import * as cityReviewCommentService from '../services/CityReviewCommentService';
 import { findById as findCityById } from '../repositories/CityRepository';
+import { getAuthenticatedUserId, getOptionalAuthenticatedUserId } from '../utils/authHelpers';
 import { 
   createErrorResponse, 
   createPaginatedResponse,
@@ -37,7 +38,7 @@ export const getCitiesWithReviews = async (req: Request, res: Response): Promise
 
 export const createReview = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.user?.id;
+    const userId = getOptionalAuthenticatedUserId(req);
     if (!userId) {
       res.status(401).json(createErrorResponse('Unauthorized'));
       return;
@@ -106,7 +107,7 @@ export const getCityReviews = async (req: Request, res: Response): Promise<void>
       res.status(400).json(createErrorResponse('cityId is required and must be a string'));
       return;
     }
-    const userId = req.user?.id;
+    const userId = getOptionalAuthenticatedUserId(req);
     const result = await cityService.getCityReviews(cityId, req.query, userId);
     res.json(createPaginatedResponse(result.reviews, result.pagination));
   } catch (error) {
@@ -116,7 +117,7 @@ export const getCityReviews = async (req: Request, res: Response): Promise<void>
 
 export const updateReview = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.user?.id;
+    const userId = getOptionalAuthenticatedUserId(req);
     if (!userId) {
       res.status(401).json(createErrorResponse('Unauthorized'));
       return;
@@ -140,7 +141,7 @@ export const updateReview = async (req: Request, res: Response): Promise<void> =
 
 export const getCityReviewByUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.user?.id;
+    const userId = getOptionalAuthenticatedUserId(req);
     const cityIdParam = (req.params as any).cityId as string | undefined;
     const cityId = cityIdParam || (req.query as any).cityId;
     if (!userId) {
@@ -164,7 +165,7 @@ export const getCityReviewByUser = async (req: Request, res: Response): Promise<
 
 export const deleteReview = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.user?.id;
+    const userId = getOptionalAuthenticatedUserId(req);
     const { reviewId } = req.params;
     if (!userId) {
       res.status(401).json(createErrorResponse('Unauthorized'));
@@ -183,7 +184,7 @@ export const deleteReview = async (req: Request, res: Response): Promise<void> =
 
 export const getAllCityReviews = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.user?.id;
+    const userId = getOptionalAuthenticatedUserId(req);
     const result = await cityService.getAllCityReviews(req.query, userId);
     res.json(createPaginatedResponse(result.reviews, result.pagination));
   } catch (error) {
@@ -193,7 +194,7 @@ export const getAllCityReviews = async (req: Request, res: Response): Promise<vo
 
 export const upvoteCityReview = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.user?.id;
+    const userId = getOptionalAuthenticatedUserId(req);
     if (!userId) {
       res.status(401).json(createErrorResponse('Unauthorized'));
       return;
@@ -217,7 +218,7 @@ export const upvoteCityReview = async (req: Request, res: Response): Promise<voi
 
 export const downvoteCityReview = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.user?.id;
+    const userId = getOptionalAuthenticatedUserId(req);
     if (!userId) {
       res.status(401).json(createErrorResponse('Unauthorized'));
       return;
@@ -241,7 +242,7 @@ export const downvoteCityReview = async (req: Request, res: Response): Promise<v
 
 export const removeVoteFromCityReview = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.user?.id;
+    const userId = getOptionalAuthenticatedUserId(req);
     if (!userId) {
       res.status(401).json(createErrorResponse('Unauthorized'));
       return;
@@ -265,7 +266,7 @@ export const removeVoteFromCityReview = async (req: Request, res: Response): Pro
 
 export const saveCityReview = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.user?.id;
+    const userId = getOptionalAuthenticatedUserId(req);
     if (!userId) {
       res.status(401).json(createErrorResponse('Unauthorized'));
       return;
@@ -289,7 +290,7 @@ export const saveCityReview = async (req: Request, res: Response): Promise<void>
 
 export const unsaveCityReview = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.user?.id;
+    const userId = getOptionalAuthenticatedUserId(req);
     if (!userId) {
       res.status(401).json(createErrorResponse('Unauthorized'));
       return;
@@ -321,7 +322,7 @@ export const getCityReviewComments = async (req: Request, res: Response): Promis
       return;
     }
 
-    const userId = req.user?.id;
+    const userId = getOptionalAuthenticatedUserId(req);
     const result = await cityReviewCommentService.getCityReviewComments(prisma, (paramsValidation.data as { id: string }).id, req.query, userId);
 
     res.json(createPaginatedResponse(result.comments, result.pagination));
@@ -349,7 +350,7 @@ export const addCityReviewComment = async (req: Request, res: Response): Promise
       return;
     }
 
-    const comment = await cityReviewCommentService.addComment(prisma, req.user.id, (paramsValidation.data as { id: string }).id, bodyValidation.data);
+    const comment = await cityReviewCommentService.addComment(prisma, getAuthenticatedUserId(req), (paramsValidation.data as { id: string }).id, bodyValidation.data);
 
     res.status(201).json(createSuccessResponse('Comment added successfully', comment));
   } catch (error) {
@@ -364,7 +365,7 @@ export const getReviewById = async (req: Request, res: Response): Promise<void> 
       res.status(400).json(createErrorResponse('reviewId is required and must be a string'));
       return;
     }
-    const userId = req.user?.id;
+    const userId = getOptionalAuthenticatedUserId(req);
     const review = await cityService.getReviewById(reviewId, userId);
     if (!review) {
       res.status(404).json(createErrorResponse('Review not found'));

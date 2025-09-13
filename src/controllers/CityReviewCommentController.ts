@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma } from '../index';
 import * as cityReviewCommentService from '../services/CityReviewCommentService';
+import { getAuthenticatedUserId } from '../utils/authHelpers';
 import { 
   createSuccessResponse, 
   createErrorResponse,
@@ -23,7 +24,7 @@ export const upvoteComment = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    await cityReviewCommentService.voteComment(prisma, req.user.id, (paramsValidation.data as { id: string }).id, 'UPVOTE');
+    await cityReviewCommentService.voteComment(prisma, getAuthenticatedUserId(req), (paramsValidation.data as { id: string }).id, 'UPVOTE');
 
     res.json(createSuccessResponse('City review comment upvoted successfully', null));
   } catch (error) {
@@ -50,7 +51,7 @@ export const downvoteComment = async (req: Request, res: Response): Promise<void
       return;
     }
 
-    await cityReviewCommentService.voteComment(prisma, req.user.id, (paramsValidation.data as { id: string }).id, 'DOWNVOTE');
+    await cityReviewCommentService.voteComment(prisma, getAuthenticatedUserId(req), (paramsValidation.data as { id: string }).id, 'DOWNVOTE');
 
     res.json(createSuccessResponse('City review comment downvoted successfully', null));
   } catch (error) {
@@ -77,7 +78,7 @@ export const removeVote = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    await cityReviewCommentService.removeVote(prisma, req.user.id, (paramsValidation.data as { id: string }).id);
+    await cityReviewCommentService.removeVote(prisma, getAuthenticatedUserId(req), (paramsValidation.data as { id: string }).id);
 
     res.json(createSuccessResponse('Vote removed successfully', null));
   } catch (error) {
@@ -110,7 +111,7 @@ export const updateComment = async (req: Request, res: Response): Promise<void> 
 
     const comment = await cityReviewCommentService.updateComment(
       prisma, 
-      req.user.id, 
+      getAuthenticatedUserId(req), 
       (paramsValidation.data as { id: string }).id, 
       bodyValidation.data
     );
@@ -150,7 +151,7 @@ export const deleteComment = async (req: Request, res: Response): Promise<void> 
 
     await cityReviewCommentService.deleteComment(
       prisma, 
-      req.user.id, 
+      getAuthenticatedUserId(req), 
       (paramsValidation.data as { id: string }).id
     );
 

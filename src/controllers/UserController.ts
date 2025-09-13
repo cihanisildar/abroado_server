@@ -3,6 +3,7 @@ import { prisma } from '../index';
 import * as userService from '../services/UserService';
 import * as s3Service from '../services/S3Service';
 import * as commentService from '../services/CommentService';
+import { getAuthenticatedUserId, getOptionalAuthenticatedUserId } from '../utils/authHelpers';
 import { 
   createSuccessResponse, 
   createErrorResponse, 
@@ -73,7 +74,7 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    const user = await userService.updateUser(prisma, (paramsValidation.data as { id: string }).id, bodyValidation.data as any, req.user.id);
+    const user = await userService.updateUser(prisma, (paramsValidation.data as { id: string }).id, bodyValidation.data as any, getAuthenticatedUserId(req));
 
     res.json(createSuccessResponse('User updated successfully', user));
   } catch (error) {
@@ -111,7 +112,7 @@ export const uploadAvatar = async (req: Request, res: Response): Promise<void> =
 
     const { id } = req.params;
 
-    if (id !== req.user.id) {
+    if (id !== getAuthenticatedUserId(req)) {
       res.status(403).json(createErrorResponse('Cannot upload avatar for another user'));
       return;
     }
@@ -122,18 +123,18 @@ export const uploadAvatar = async (req: Request, res: Response): Promise<void> =
     }
 
     // Get current user data to access old avatar URL
-    const currentUser = await userService.getUserById(prisma, req.user.id);
+    const currentUser = await userService.getUserById(prisma, getAuthenticatedUserId(req));
     const oldAvatarUrl = currentUser?.avatar ?? null;
 
     // Upload new avatar to S3
-    const avatarUrl = await s3Service.uploadAvatar(req.file.buffer, req.file.mimetype, req.user.id);
+    const avatarUrl = await s3Service.uploadAvatar(req.file.buffer, req.file.mimetype, getAuthenticatedUserId(req));
 
     // Update user record with new avatar URL
     const updatedUser = await userService.updateUser(
       prisma,
-      req.user.id,
+      getAuthenticatedUserId(req),
       { avatar: avatarUrl } as any,
-      req.user.id
+      getAuthenticatedUserId(req)
     );
 
     // Delete old avatar after successful update (if it exists and is an S3 URL)
@@ -167,7 +168,7 @@ export const getUserComments = async (req: Request, res: Response): Promise<void
     }
 
     const { id } = paramsValidation.data as { id: string };
-    const currentUserId = req.user?.id;
+    const currentUserId = getOptionalAuthenticatedUserId(req);
 
     const result = await commentService.getUserComments(
       prisma,
@@ -266,7 +267,7 @@ export const getUserCityReviews = async (req: Request, res: Response): Promise<v
     }
 
     const { id } = paramsValidation.data as { id: string };
-    const currentUserId = req.user?.id;
+    const currentUserId = getOptionalAuthenticatedUserId(req);
 
     const result = await userService.getCityReviewsByUser(
       prisma,

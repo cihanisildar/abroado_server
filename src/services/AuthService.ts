@@ -161,9 +161,31 @@ export const login = async (prisma: PrismaClient, loginData: LoginDto): Promise<
   }
 };
 
-export const googleAuth = async (prisma: PrismaClient, googleProfile: any): Promise<{ user: UserResponse; accessToken: string; refreshToken: string; isNewUser: boolean }> => {
-  // Google authentication not supported in current schema
-  throw new Error('Google authentication not supported');
+export const googleAuth = async (prisma: PrismaClient, googleAuthResult: { user: UserResponse; isNewUser: boolean }): Promise<{ user: UserResponse; accessToken: string; refreshToken: string; isNewUser: boolean }> => {
+  try {
+    const { user, isNewUser } = googleAuthResult;
+    
+    console.log(`[Auth] Processing Google OAuth for user: ${user.email}`);
+
+    // Update online status
+    await userRepository.updateOnlineStatus(prisma, user.id, true);
+
+    // Generate tokens
+    const accessToken = generateAccessToken(user.id, user.email);
+    const refreshToken = generateRefreshToken(user.id, user.email);
+
+    console.log(`[Auth] Google OAuth tokens generated successfully for user: ${user.email}`);
+
+    return { 
+      user, 
+      accessToken, 
+      refreshToken, 
+      isNewUser 
+    };
+  } catch (error) {
+    console.error(`[Auth] Google OAuth failed:`, error);
+    throw error;
+  }
 };
 
 export const logout = async (prisma: PrismaClient, userId: string): Promise<void> => {
