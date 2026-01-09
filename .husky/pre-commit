@@ -1,0 +1,2 @@
+# Run TypeScript type checking before commit
+npx tsc --noEmit
