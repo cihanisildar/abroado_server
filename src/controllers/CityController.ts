@@ -3,8 +3,8 @@ import * as cityService from '../services/CityService';
 import * as cityReviewCommentService from '../services/CityReviewCommentService';
 import { findById as findCityById } from '../repositories/CityRepository';
 import { getAuthenticatedUserId, getOptionalAuthenticatedUserId } from '../utils/authHelpers';
-import { 
-  createErrorResponse, 
+import {
+  createErrorResponse,
   createPaginatedResponse,
   CityQuery,
   CommentSchema,
@@ -14,7 +14,7 @@ import {
 } from '../types';
 import { CityReviewSchema, CityReviewUpdateSchema } from '../types/validations/city';
 import { createSuccessResponse } from '../types/responses';
-import { prisma } from '../index';
+import { prisma } from '../lib/prisma';
 
 export const getCities = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -64,7 +64,7 @@ export const createReview = async (req: Request, res: Response): Promise<void> =
       const existingCity = await prisma.city.findUnique({
         where: { id: cityId }
       });
-      
+
       if (!existingCity) {
         // If not found in database, try to find it in CSV data
         const csvCity = await findCityById(cityId);
@@ -199,7 +199,7 @@ export const upvoteCityReview = async (req: Request, res: Response): Promise<voi
       res.status(401).json(createErrorResponse('Unauthorized'));
       return;
     }
-    
+
     const bodyId = (req.body as any).cityReviewId as string | undefined;
     const paramId = (req.params as any).reviewId as string | undefined;
     const cityReviewId = bodyId || paramId;
@@ -223,7 +223,7 @@ export const downvoteCityReview = async (req: Request, res: Response): Promise<v
       res.status(401).json(createErrorResponse('Unauthorized'));
       return;
     }
-    
+
     const bodyId = (req.body as any).cityReviewId as string | undefined;
     const paramId = (req.params as any).reviewId as string | undefined;
     const cityReviewId = bodyId || paramId;
@@ -247,7 +247,7 @@ export const removeVoteFromCityReview = async (req: Request, res: Response): Pro
       res.status(401).json(createErrorResponse('Unauthorized'));
       return;
     }
-    
+
     const bodyId = (req.body as any).cityReviewId as string | undefined;
     const paramId = (req.params as any).reviewId as string | undefined;
     const cityReviewId = bodyId || paramId;

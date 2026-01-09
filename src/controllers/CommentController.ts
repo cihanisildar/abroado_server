@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
-import { prisma } from '../index';
+import { prisma } from '../lib/prisma';
 import * as commentService from '../services/CommentService';
 import { getAuthenticatedUserId } from '../utils/authHelpers';
-import { 
-  createSuccessResponse, 
+import {
+  createSuccessResponse,
   createErrorResponse,
   IdSchema,
   UpdateCommentSchema,
@@ -110,9 +110,9 @@ export const updateComment = async (req: Request, res: Response): Promise<void> 
     }
 
     const comment = await commentService.updateComment(
-      prisma, 
-      getAuthenticatedUserId(req), 
-      (paramsValidation.data as { id: string }).id, 
+      prisma,
+      getAuthenticatedUserId(req),
+      (paramsValidation.data as { id: string }).id,
       bodyValidation.data
     );
 
@@ -150,8 +150,8 @@ export const deleteComment = async (req: Request, res: Response): Promise<void> 
     }
 
     await commentService.deleteComment(
-      prisma, 
-      getAuthenticatedUserId(req), 
+      prisma,
+      getAuthenticatedUserId(req),
       (paramsValidation.data as { id: string }).id
     );
 

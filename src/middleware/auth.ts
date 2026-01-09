@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { prisma } from '../index';
+import { prisma } from '../lib/prisma';
 import * as authService from '../services/AuthService';
 import { getAuthenticatedUserRole } from '../utils/authHelpers';
 
@@ -8,7 +8,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
   const cookieToken = req.cookies?.gb_accessToken;
   const authHeader = req.headers['authorization'];
   const headerToken = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
-  
+
   const token = cookieToken || headerToken;
 
   if (!token) {
@@ -21,7 +21,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
 
   try {
     const decoded = authService.verifyAccessToken(token);
-    
+
     // Fetch user from database to ensure they still exist
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
@@ -56,7 +56,7 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
   const cookieToken = req.cookies?.gb_accessToken;
   const authHeader = req.headers['authorization'];
   const headerToken = authHeader && authHeader.split(' ')[1];
-  
+
   const token = cookieToken || headerToken;
 
   if (!token) {

@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { AuthenticatedUser } from '../types/express';
+import { AuthenticatedUser } from '../types/global.d';
 
 /**
  * Utility function to get the authenticated user from the request with proper typing

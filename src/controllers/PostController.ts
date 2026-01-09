@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
-import { prisma } from '../index';
+import { prisma } from '../lib/prisma';
 import * as postService from '../services/PostService';
 import { findById as findCityById, getAllCountries } from '../repositories/CityRepository';
 import * as s3Service from '../services/S3Service';
 import { getAuthenticatedUserId, getOptionalAuthenticatedUserId } from '../utils/authHelpers';
-import { 
-  createSuccessResponse, 
-  createErrorResponse, 
+import {
+  createSuccessResponse,
+  createErrorResponse,
   createPaginatedResponse,
   PostSchema,
   UpdatePostSchema,
@@ -27,7 +27,7 @@ export const createPost = async (req: Request, res: Response): Promise<void> => 
 
     // Handle both JSON and form data
     let postData: any;
-    
+
     if (req.is('multipart/form-data')) {
       // Parse form data
       postData = {
@@ -35,7 +35,7 @@ export const createPost = async (req: Request, res: Response): Promise<void> => 
         content: req.body.content,
         category: req.body.category || 'DISCUSSION',
         tags: Array.isArray(req.body.tags) ? req.body.tags : [req.body.tags].filter(Boolean),
-        cityId: req.body.cityId || undefined 
+        cityId: req.body.cityId || undefined
       };
     } else {
       // Use JSON body as before
@@ -49,7 +49,7 @@ export const createPost = async (req: Request, res: Response): Promise<void> => 
     }
 
     const { cityId, ...rest } = validation.data;
-    
+
     // Handle cityId validation and conversion
     let finalCityId = cityId;
     if (cityId) {
@@ -58,7 +58,7 @@ export const createPost = async (req: Request, res: Response): Promise<void> => 
         const existingCity = await prisma.city.findUnique({
           where: { id: cityId }
         });
-        
+
         if (!existingCity) {
           // If not found in database, try to find it in CSV data
           const csvCity = await findCityById(cityId);
@@ -84,32 +84,32 @@ export const createPost = async (req: Request, res: Response): Promise<void> => 
         return;
       }
     }
-    
+
     // Handle image uploads if present
     let imageUrls: string[] = [];
     const files = req.files as Express.Multer.File[] | undefined;
-    
+
     if (files && files.length > 0) {
       // Create post first to get ID for S3 upload
-      const tempPostData = { 
-        ...rest, 
+      const tempPostData = {
+        ...rest,
         ...(finalCityId && { cityId: finalCityId }),
         category: rest.category ?? 'DISCUSSION'
       };
       const tempPost = await postService.createPost(prisma, getAuthenticatedUserId(req), tempPostData);
-      
+
       // Upload images to S3
       imageUrls = await Promise.all(
         files.map(file => s3Service.uploadPostImage(file.buffer, file.mimetype, tempPost.id))
       );
-      
+
       // Update post with image URLs
       const finalPost = await postService.updatePost(prisma, getAuthenticatedUserId(req), tempPost.id, { images: imageUrls });
       res.status(201).json(createSuccessResponse('Post created successfully', finalPost));
     } else {
       // No images, create post normally
-      const postDataWithCity = { 
-        ...rest, 
+      const postDataWithCity = {
+        ...rest,
         ...(finalCityId && { cityId: finalCityId }),
         category: rest.category ?? 'DISCUSSION'
       };
@@ -346,7 +346,7 @@ export const updatePost = async (req: Request, res: Response): Promise<void> => 
     }
 
     const { id } = paramsValidation.data as { id: string };
-    
+
     // Handle cityId validation and conversion for updates
     let updateData = validation.data;
     if (updateData.cityId) {
@@ -355,7 +355,7 @@ export const updatePost = async (req: Request, res: Response): Promise<void> => 
         const existingCity = await prisma.city.findUnique({
           where: { id: updateData.cityId }
         });
-        
+
         if (!existingCity) {
           // If not found in database, try to find it in CSV data
           const csvCity = await findCityById(updateData.cityId);
@@ -381,7 +381,7 @@ export const updatePost = async (req: Request, res: Response): Promise<void> => 
         return;
       }
     }
-    
+
     const post = await postService.updatePost(prisma, getAuthenticatedUserId(req), id, updateData);
 
     res.json(createSuccessResponse('Post updated successfully', post));

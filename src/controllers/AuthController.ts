@@ -1,13 +1,13 @@
 import { Request, Response, CookieOptions } from 'express';
-import { prisma } from '../index';
+import { prisma } from '../lib/prisma';
 import * as authService from '../services/AuthService';
-import { 
-  createSuccessResponse, 
-  createErrorResponse, 
-  RegisterSchema, 
-  LoginSchema, 
+import {
+  createSuccessResponse,
+  createErrorResponse,
+  RegisterSchema,
+  LoginSchema,
   UpdateProfileSchema,
-  validateRequest 
+  validateRequest
 } from '../types';
 import { getAuthenticatedUserId } from '../utils/authHelpers';
 import * as s3Service from '../services/S3Service';
@@ -56,7 +56,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     });
 
     console.log(`[Auth] User registered successfully: ${result.user.email}`);
-    
+
     res.status(201).json(createSuccessResponse('User registered successfully', {
       user: result.user
     }));
@@ -134,11 +134,11 @@ export const refresh = async (req: Request, res: Response): Promise<void> => {
   } catch (error) {
     const isProduction = process.env.NODE_ENV === 'production';
     const cookieOptions = getCookieOptions(isProduction);
-    
+
     // Clear invalid refresh token with secure settings
     res.clearCookie('gb_refreshToken', cookieOptions);
     res.clearCookie('gb_accessToken', cookieOptions);
-    
+
     res.status(401).json(createErrorResponse('Invalid refresh token', error instanceof Error ? error.message : 'Unknown error'));
   }
 };
@@ -147,7 +147,7 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = getAuthenticatedUserId(req);
     await authService.logout(prisma, userId);
-    
+
     const isProduction = process.env.NODE_ENV === 'production';
     const cookieOptions = getCookieOptions(isProduction);
 

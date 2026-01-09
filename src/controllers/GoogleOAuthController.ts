@@ -1,11 +1,11 @@
 import { Request, Response, CookieOptions } from 'express';
 import passport from 'passport';
-import { prisma } from '../index';
+import { prisma } from '../lib/prisma';
 import * as authService from '../services/AuthService';
 import GoogleOAuthService from '../services/GoogleOAuthService';
 import { getAuthenticatedUserId } from '../utils/authHelpers';
-import { 
-  createSuccessResponse, 
+import {
+  createSuccessResponse,
   createErrorResponse
 } from '../types';
 
@@ -39,8 +39,8 @@ export const initiateGoogleAuth = (req: Request, res: Response): void => {
   }
 
   console.log('[OAuth] Initiating Google OAuth authentication');
-  
-  passport.authenticate('google', { 
+
+  passport.authenticate('google', {
     scope: ['profile', 'email'],
     session: false // We use JWT tokens, not sessions
   })(req, res);
@@ -52,15 +52,15 @@ export const handleGoogleCallback = (req: Request, res: Response): void => {
     return;
   }
 
-  passport.authenticate('google', { 
+  passport.authenticate('google', {
     session: false,
     failureRedirect: process.env.FRONTEND_URL ? `${process.env.FRONTEND_URL}/login?error=oauth_failed` : '/login?error=oauth_failed'
   }, async (err: any, googleAuthResult: any) => {
     try {
       if (err) {
         console.error('[OAuth] Google OAuth error:', err);
-        const redirectUrl = process.env.FRONTEND_URL ? 
-          `${process.env.FRONTEND_URL}/login?error=oauth_error` : 
+        const redirectUrl = process.env.FRONTEND_URL ?
+          `${process.env.FRONTEND_URL}/login?error=oauth_error` :
           '/login?error=oauth_error';
         res.redirect(redirectUrl);
         return;
@@ -68,8 +68,8 @@ export const handleGoogleCallback = (req: Request, res: Response): void => {
 
       if (!googleAuthResult) {
         console.error('[OAuth] Google OAuth failed - no user data');
-        const redirectUrl = process.env.FRONTEND_URL ? 
-          `${process.env.FRONTEND_URL}/login?error=oauth_denied` : 
+        const redirectUrl = process.env.FRONTEND_URL ?
+          `${process.env.FRONTEND_URL}/login?error=oauth_denied` :
           '/login?error=oauth_denied';
         res.redirect(redirectUrl);
         return;
@@ -96,16 +96,16 @@ export const handleGoogleCallback = (req: Request, res: Response): void => {
       console.log(`[OAuth] Cookies set for Google OAuth user: ${result.user.email}`);
 
       // Redirect to frontend with success
-      const redirectUrl = process.env.FRONTEND_URL ? 
-        `${process.env.FRONTEND_URL}/dashboard${result.isNewUser ? '?welcome=true' : ''}` : 
+      const redirectUrl = process.env.FRONTEND_URL ?
+        `${process.env.FRONTEND_URL}/dashboard${result.isNewUser ? '?welcome=true' : ''}` :
         `/dashboard${result.isNewUser ? '?welcome=true' : ''}`;
-        
+
       res.redirect(redirectUrl);
 
     } catch (error) {
       console.error('[OAuth] Error processing Google OAuth callback:', error);
-      const redirectUrl = process.env.FRONTEND_URL ? 
-        `${process.env.FRONTEND_URL}/login?error=oauth_error` : 
+      const redirectUrl = process.env.FRONTEND_URL ?
+        `${process.env.FRONTEND_URL}/login?error=oauth_error` :
         '/login?error=oauth_error';
       res.redirect(redirectUrl);
     }
@@ -127,10 +127,10 @@ export const getGoogleAuthStatus = async (req: Request, res: Response): Promise<
 export const unlinkGoogleAccount = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = getAuthenticatedUserId(req);
-    
+
     // Get current user to check if they have a password
     const currentUser = await authService.getProfile(prisma, userId);
-    
+
     if (!currentUser) {
       res.status(404).json(createErrorResponse('User not found'));
       return;
@@ -150,7 +150,7 @@ export const unlinkGoogleAccount = async (req: Request, res: Response): Promise<
     // Unlink Google account
     await prisma.user.update({
       where: { id: userId },
-      data: { 
+      data: {
         googleId: null,
         updatedAt: new Date()
       }

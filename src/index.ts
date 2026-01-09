@@ -5,12 +5,18 @@ import helmet from 'helmet';
 import passport from 'passport';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
 import swaggerUi from 'swagger-ui-express';
 
+// Import Prisma client from dedicated module
+import { prisma, disconnectPrisma, checkDatabaseConnection } from './lib/prisma';
+
+// Import logger
+import logger, { logInfo, logError, logWarn } from './lib/logger';
+
 // Import middleware
-import requestLogger from './middleware/logger';
+import { requestIdMiddleware } from './middleware/requestId';
+import httpLoggerMiddleware from './middleware/logger';
 import { generalLimiter } from './middleware/rateLimiter';
 import { errorHandler } from './middleware/errorHandler';
 
@@ -32,10 +38,7 @@ const requiredEnvVars = ['JWT_SECRET', 'DATABASE_URL'];
 const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
 
 if (missingEnvVars.length > 0) {
-  console.error('❌ Missing required environment variables:');
-  missingEnvVars.forEach(varName => {
-    console.error(`  - ${varName}`);
-  });
+  logError('Missing required environment variables', undefined, { missing: missingEnvVars });
   process.exit(1);
 }
 
@@ -44,18 +47,12 @@ const recommendedEnvVars = ['JWT_REFRESH_SECRET', 'FRONTEND_URL'];
 const missingRecommended = recommendedEnvVars.filter(varName => !process.env[varName]);
 
 if (missingRecommended.length > 0) {
-  console.warn('⚠️  Missing recommended environment variables:');
-  missingRecommended.forEach(varName => {
-    console.warn(`  - ${varName}`);
-  });
+  logWarn('Missing recommended environment variables', { missing: missingRecommended });
 }
 
-console.log('✅ Environment variables loaded successfully');
+logInfo('Environment variables loaded successfully');
 
-// Initialize Prisma client
-export const prisma = new PrismaClient();
-
-// Initialize Google OAuth service
+// Initialize Google OAuth service (Prisma is now imported from lib/prisma)
 GoogleOAuthService.getInstance(prisma);
 
 const app = express();
@@ -76,19 +73,18 @@ const corsOptions = {
       "https://www.abroado.com",
       "https://www.abroado.com.tr",
     ];
-    
+
     // Allow requests with no origin (server-to-server, health checks, etc.)
     if (!origin) {
-      console.log('[CORS] Request with no origin - allowing');
+      logger.debug('[CORS] Request with no origin - allowing');
       return callback(null, true);
     }
-    
+
     if (allowedOrigins.indexOf(origin) !== -1) {
-      console.log(`[CORS] Origin allowed: ${origin}`);
+      logger.debug(`[CORS] Origin allowed: ${origin}`);
       callback(null, true);
     } else {
-      console.log(`[CORS] Origin blocked: ${origin}`);
-      console.log('[CORS] Allowed origins:', allowedOrigins);
+      logWarn('[CORS] Origin blocked', { origin, allowedOrigins });
       callback(new Error('Not allowed by CORS policy'));
     }
   },
@@ -125,17 +121,17 @@ const io = new Server(server, {
         "https://www.abroado.com",
         "https://www.abroado.com.tr",
       ];
-     
-      
+
+
       // Allow requests with no origin (server-to-server, health checks, etc.)
       if (!origin) {
         return callback(null, true);
       }
-      
+
       if (allowedOrigins.indexOf(origin) !== -1) {
         callback(null, true);
       } else {
-        console.log(`Socket.IO CORS blocked origin: ${origin}`);
+        logWarn('[Socket.IO] CORS blocked origin', { origin });
         callback(new Error('Not allowed by CORS policy'));
       }
     },
@@ -168,13 +164,21 @@ app.use(helmet({
   }
 }));
 
-// Middleware
+// Middleware - ORDER MATTERS!
+// 1. Request ID must be first for proper context propagation
+app.use(requestIdMiddleware);
+
+// 2. Security and parsing
 app.use(cors(corsOptions));
 app.use(cookieParser());
-app.use(express.json({ limit: '1mb' })); // Reduced from 10mb
-app.use(express.urlencoded({ extended: true, limit: '1mb' })); // Reduced from 10mb
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(passport.initialize());
-app.use(requestLogger);
+
+// 3. HTTP logging (after parsing, before routes)
+app.use(httpLoggerMiddleware);
+
+// 4. Rate limiting
 app.use(generalLimiter);
 
 // Swagger UI
@@ -191,12 +195,16 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
 }));
 
 // Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+app.get('/health', async (req, res) => {
+  const dbConnected = await checkDatabaseConnection();
+  const status = dbConnected ? 'OK' : 'DEGRADED';
+  const statusCode = dbConnected ? 200 : 503;
+
+  res.status(statusCode).json({
+    status,
     message: 'Gurbetci Server is running',
     timestamp: new Date().toISOString(),
-    database: 'connected',
+    database: dbConnected ? 'connected' : 'disconnected',
     websocket: 'active',
     documentation: '/api-docs'
   });
@@ -214,7 +222,7 @@ app.get('/debug/env', (req, res) => {
     DATABASE_URL: process.env.DATABASE_URL ? '✓ Set' : '✗ Missing',
     timestamp: new Date().toISOString()
   };
-  
+
   res.json(envDebug);
 });
 
@@ -239,25 +247,25 @@ const PORT = process.env.PORT || 3001;
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
-  console.log('\nReceived SIGINT, shutting down gracefully...');
-  
+  logInfo('Received SIGINT, shutting down gracefully...');
+
   // Close server
   server.close(() => {
-    console.log('HTTP server closed');
+    logInfo('HTTP server closed');
   });
-  
+
   // Disconnect from database
-  await prisma.$disconnect();
-  console.log('Database connection closed');
-  
+  await disconnectPrisma();
+  logInfo('Database connection closed');
+
   process.exit(0);
 });
 
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🌐 CORS enabled for: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
-  console.log(`📡 WebSocket server initialized`);
-  console.log(`💾 Database connected`);
-  console.log(`📚 API Documentation available at: http://localhost:${PORT}/api-docs`);
+  logInfo('Server started successfully', {
+    port: PORT,
+    environment: process.env.NODE_ENV || 'development',
+    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+    apiDocs: `http://localhost:${PORT}/api-docs`,
+  });
 }); 

@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
-import { prisma } from '../index';
+import { prisma } from '../lib/prisma';
 import * as userService from '../services/UserService';
 import * as s3Service from '../services/S3Service';
 import * as commentService from '../services/CommentService';
 import { getAuthenticatedUserId, getOptionalAuthenticatedUserId } from '../utils/authHelpers';
-import { 
-  createSuccessResponse, 
-  createErrorResponse, 
+import {
+  createSuccessResponse,
+  createErrorResponse,
   createPaginatedResponse,
   UserQuerySchema,
   UpdateProfileSchema,
@@ -282,4 +282,3 @@ export const getUserCityReviews = async (req: Request, res: Response): Promise<v
   }
 };
 
- 

@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
-import { prisma } from '../index';
+import { prisma } from '../lib/prisma';
 import * as roomService from '../services/RoomService';
 import { getAuthenticatedUserId, getOptionalAuthenticatedUserId } from '../utils/authHelpers';
-import { 
-  createSuccessResponse, 
-  createErrorResponse, 
+import {
+  createSuccessResponse,
+  createErrorResponse,
   createPaginatedResponse,
   RoomSchema,
   RoomQuerySchema,
