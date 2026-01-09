@@ -214,14 +214,14 @@ export const findAllWithActivity = async (prisma: PrismaClient, query: UserQuery
               }
             }
           },
-                          _count: {
-          select: {
-            posts: true,
-            comments: true,
-            cityReviews: true,
-            roomMemberships: true
+          _count: {
+            select: {
+              posts: true,
+              comments: true,
+              cityReviews: true,
+              roomMemberships: true
+            }
           }
-        }
         },
         orderBy: [
           { isOnline: 'desc' },
@@ -312,7 +312,7 @@ export const create = async (prisma: PrismaClient, userData: CreateUserData) => 
   if (!userData.email || !userData.username) {
     throw new Error('Email and username are required');
   }
-  
+
   // Password is required only for regular registration, not for Google OAuth
   if (!userData.password && !userData.googleId) {
     throw new Error('Password is required for non-OAuth registration');
@@ -357,20 +357,20 @@ export const update = async (prisma: PrismaClient, id: string, updateData: Updat
 
   // Build update data with proper type checking
   const data: Prisma.UserUpdateInput = {};
-  
+
   if (updateData.username !== undefined) {
     if (!updateData.username.trim()) {
       throw new Error('Username cannot be empty');
     }
     data.username = updateData.username.trim();
   }
-  
+
   if (updateData.currentCity !== undefined) data.currentCity = updateData.currentCity;
   if (updateData.currentCountry !== undefined) data.currentCountry = updateData.currentCountry;
   if (updateData.targetCountry !== undefined) data.targetCountry = updateData.targetCountry;
   if (updateData.techStack !== undefined) {
     // Handle techStack as array (per schema)
-    data.techStack = Array.isArray(updateData.techStack) 
+    data.techStack = Array.isArray(updateData.techStack)
       ? updateData.techStack
       : JSON.parse(updateData.techStack);
   }
@@ -421,9 +421,9 @@ export const updateOnlineStatus = async (prisma: PrismaClient, id: string, isOnl
 };
 
 export const linkGoogleAccount = async (
-  prisma: PrismaClient, 
-  id: string, 
-  googleId: string, 
+  prisma: PrismaClient,
+  id: string,
+  googleId: string,
   avatar?: string
 ) => {
   if (!id || !googleId) {

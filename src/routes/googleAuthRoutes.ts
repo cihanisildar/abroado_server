@@ -1,6 +1,7 @@
 import express from 'express';
 import { authenticateToken } from '../middleware/auth';
 import * as googleOAuthController from '../controllers/GoogleOAuthController';
+import { cacheMiddleware, invalidateMiddleware } from '../middleware/cache';
 
 const router = express.Router();
 
@@ -93,7 +94,7 @@ router.get('/google/callback', googleOAuthController.handleGoogleCallback);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/google/status', googleOAuthController.getGoogleAuthStatus);
+router.get('/google/status', cacheMiddleware(86400), googleOAuthController.getGoogleAuthStatus);
 
 /**
  * @swagger
@@ -136,6 +137,6 @@ router.get('/google/status', googleOAuthController.getGoogleAuthStatus);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.delete('/google/unlink', authenticateToken, googleOAuthController.unlinkGoogleAccount);
+router.delete('/google/unlink', authenticateToken, invalidateMiddleware(['/api/auth/profile']), googleOAuthController.unlinkGoogleAccount);
 
 export default router;

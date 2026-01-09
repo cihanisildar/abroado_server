@@ -38,6 +38,7 @@ help:
 	@echo "Cleanup:"
 	@echo "  make clean        - Remove containers and networks"
 	@echo "  make clean-all    - Remove everything including volumes"
+	@echo "  make cache-clear  - Clear NGINX gateway cache"
 
 # ==========================================
 # Development

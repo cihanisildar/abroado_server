@@ -3,6 +3,7 @@ import * as userController from '../controllers/UserController';
 import { authenticateToken, optionalAuth } from '../middleware/auth';
 import { generalLimiter } from '../middleware/rateLimiter';
 import { avatarUpload } from '../middleware/upload';
+import { cacheMiddleware, invalidateMiddleware } from '../middleware/cache';
 
 const router = Router();
 
@@ -73,7 +74,7 @@ const router = Router();
  *                         totalPages:
  *                           type: integer
  */
-router.get('/', generalLimiter, userController.getUsers);
+router.get('/', generalLimiter, cacheMiddleware(300), userController.getUsers);
 
 /**
  * @swagger
@@ -172,10 +173,10 @@ router.get('/', generalLimiter, userController.getUsers);
  *                     pagination:
  *                       $ref: '#/components/schemas/Pagination'
  */
-router.get('/with-activity', generalLimiter, userController.getUsersWithActivity);
+router.get('/with-activity', generalLimiter, cacheMiddleware(300), userController.getUsersWithActivity);
 
 // Avatar upload route - must come before :id route definitions
-router.post('/:id/avatar', authenticateToken, avatarUpload.single('avatar'), userController.uploadAvatar);
+router.post('/:id/avatar', authenticateToken, avatarUpload.single('avatar'), invalidateMiddleware(['/api/users']), userController.uploadAvatar);
 
 /**
  * @swagger
@@ -235,7 +236,7 @@ router.post('/:id/avatar', authenticateToken, avatarUpload.single('avatar'), use
  *                       $ref: '#/components/schemas/Pagination'
  */
 // Get comments made by a specific user (paginated)
-router.get('/:id/comments', generalLimiter, optionalAuth, userController.getUserComments);
+router.get('/:id/comments', generalLimiter, optionalAuth, cacheMiddleware(300), userController.getUserComments);
 
 /**
  * @swagger
@@ -289,7 +290,7 @@ router.get('/:id/comments', generalLimiter, optionalAuth, userController.getUser
  *                     pagination:
  *                       $ref: '#/components/schemas/Pagination'
  */
-router.get('/:id/saved-posts', generalLimiter, optionalAuth, userController.getSavedPosts);
+router.get('/:id/saved-posts', generalLimiter, optionalAuth, cacheMiddleware({ ttl: 300, isPrivate: true }), userController.getSavedPosts);
 
 /**
  * @swagger
@@ -343,7 +344,7 @@ router.get('/:id/saved-posts', generalLimiter, optionalAuth, userController.getS
  *                     pagination:
  *                       $ref: '#/components/schemas/Pagination'
  */
-router.get('/:id/saved-reviews', generalLimiter, optionalAuth, userController.getSavedCityReviews);
+router.get('/:id/saved-reviews', generalLimiter, optionalAuth, cacheMiddleware({ ttl: 300, isPrivate: true }), userController.getSavedCityReviews);
 
 /**
  * @swagger
@@ -397,7 +398,7 @@ router.get('/:id/saved-reviews', generalLimiter, optionalAuth, userController.ge
  *                     pagination:
  *                       $ref: '#/components/schemas/Pagination'
  */
-router.get('/:id/upvoted-posts', generalLimiter, optionalAuth, userController.getUpvotedPosts);
+router.get('/:id/upvoted-posts', generalLimiter, optionalAuth, cacheMiddleware({ ttl: 300, isPrivate: true }), userController.getUpvotedPosts);
 
 /**
  * @swagger
@@ -431,7 +432,7 @@ router.get('/:id/upvoted-posts', generalLimiter, optionalAuth, userController.ge
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.get('/:id', generalLimiter, userController.getUserById);
+router.get('/:id', generalLimiter, cacheMiddleware(3600), userController.getUserById);
 
 /**
  * @swagger
@@ -483,7 +484,7 @@ router.get('/:id', generalLimiter, userController.getUserById);
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.put('/:id', authenticateToken, generalLimiter, userController.updateUser);
+router.put('/:id', authenticateToken, generalLimiter, invalidateMiddleware(['/api/users']), userController.updateUser);
 
 /**
  * @swagger
@@ -537,6 +538,6 @@ router.put('/:id', authenticateToken, generalLimiter, userController.updateUser)
  *                     pagination:
  *                       $ref: '#/components/schemas/Pagination'
  */
-router.get('/:id/city-reviews', generalLimiter, optionalAuth, userController.getUserCityReviews);
+router.get('/:id/city-reviews', generalLimiter, optionalAuth, cacheMiddleware(300), userController.getUserCityReviews);
 
 export default router; 

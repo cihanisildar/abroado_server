@@ -49,6 +49,8 @@ services:
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-your-refresh-secret-change-in-production}
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
       - COOKIE_DOMAIN=${COOKIE_DOMAIN:-localhost}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
       postgres:
         condition: service_healthy

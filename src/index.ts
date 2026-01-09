@@ -9,7 +9,9 @@ import dotenv from 'dotenv';
 import swaggerUi from 'swagger-ui-express';
 
 // Import Prisma client from dedicated module
-import { prisma, disconnectPrisma, checkDatabaseConnection } from './lib/prisma';
+import { checkDatabaseConnection, disconnectPrisma } from './lib/prisma';
+import { checkRedisConnection } from './lib/redis';
+import { prisma } from './lib/prisma';
 
 // Import logger
 import logger, { logInfo, logError, logWarn } from './lib/logger';
@@ -196,15 +198,20 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
 
 // Health check endpoint
 app.get('/health', async (req, res) => {
-  const dbConnected = await checkDatabaseConnection();
-  const status = dbConnected ? 'OK' : 'DEGRADED';
-  const statusCode = dbConnected ? 200 : 503;
+  const [dbConnected, redisConnected] = await Promise.all([
+    checkDatabaseConnection(),
+    checkRedisConnection()
+  ]);
+
+  const status = (dbConnected && redisConnected) ? 'OK' : 'DEGRADED';
+  const statusCode = (dbConnected && redisConnected) ? 200 : 503;
 
   res.status(statusCode).json({
     status,
     message: 'Gurbetci Server is running',
     timestamp: new Date().toISOString(),
     database: dbConnected ? 'connected' : 'disconnected',
+    redis: redisConnected ? 'connected' : 'disconnected',
     websocket: 'active',
     documentation: '/api-docs'
   });
@@ -220,6 +227,8 @@ app.get('/debug/env', (req, res) => {
     COOKIE_DOMAIN: process.env.COOKIE_DOMAIN ? `✓ Set: ${process.env.COOKIE_DOMAIN}` : '✗ Not set',
     FRONTEND_URL: process.env.FRONTEND_URL ? `✓ Set: ${process.env.FRONTEND_URL}` : '✗ Not set',
     DATABASE_URL: process.env.DATABASE_URL ? '✓ Set' : '✗ Missing',
+    REDIS_HOST: process.env.REDIS_HOST ? `✓ Set: ${process.env.REDIS_HOST}` : '✗ Not set',
+    REDIS_PORT: process.env.REDIS_PORT ? `✓ Set: ${process.env.REDIS_PORT}` : '✗ Not set',
     timestamp: new Date().toISOString()
   };
 

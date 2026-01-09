@@ -8,6 +8,7 @@ import countryRoutes from './countryRoutes';
 import commentRoutes from './commentRoutes';
 import cityReviewCommentRoutes from './cityReviewCommentRoutes';
 import reviewRoutes from './reviewRoutes';
+import { cacheMiddleware } from '../middleware/cache';
 
 const router = express.Router();
 
@@ -68,7 +69,7 @@ const router = express.Router();
  *                     "WebSocket Support"
  *                   ]
  */
-router.get('/', (req, res) => {
+router.get('/', cacheMiddleware(3600), (req, res) => {
   res.json({
     message: 'Gurbetci Server API',
     version: '2.0.0',

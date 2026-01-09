@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as countryController from '../controllers/CountryController';
+import { cacheMiddleware } from '../middleware/cache';
 
 const router = Router();
 
@@ -28,6 +29,6 @@ const router = Router();
  *                   items:
  *                     type: object
  */
-router.get('/', countryController.getCountries);
+router.get('/', cacheMiddleware(86400), countryController.getCountries);
 
 export default router; 

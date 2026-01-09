@@ -4,6 +4,7 @@ import { authenticateToken } from '../middleware/auth';
 import { authLimiter, uploadLimiter } from '../middleware/rateLimiter';
 import { avatarUpload } from '../middleware/upload';
 import googleAuthRoutes from './googleAuthRoutes';
+import { cacheMiddleware, invalidateMiddleware } from '../middleware/cache';
 
 
 const router = Router();
@@ -191,7 +192,7 @@ router.post('/logout', authenticateToken, authController.logout);
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.get('/profile', authenticateToken, authController.getProfile);
+router.get('/profile', authenticateToken, cacheMiddleware({ ttl: 3600, isPrivate: true }), authController.getProfile);
 
 /**
  * @swagger
@@ -228,7 +229,7 @@ router.get('/profile', authenticateToken, authController.getProfile);
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  */
-router.put('/profile', authenticateToken, avatarUpload.single('avatar'), authController.updateProfile);
+router.put('/profile', authenticateToken, avatarUpload.single('avatar'), invalidateMiddleware(['/api/auth/profile', '/api/users']), authController.updateProfile);
 
 // Google OAuth routes
 router.use('/', googleAuthRoutes);

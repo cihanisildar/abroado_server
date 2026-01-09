@@ -2,6 +2,7 @@ import { Router } from 'express';
 import * as cityController from '../controllers/CityController';
 import { authenticateToken, optionalAuth } from '../middleware/auth';
 import { generalLimiter, reviewLimiter } from '../middleware/rateLimiter';
+import { cacheMiddleware, invalidateMiddleware } from '../middleware/cache';
 
 
 const router = Router();
@@ -83,7 +84,7 @@ const router = Router();
  *                         totalPages:
  *                           type: integer
  */
-router.get('/', generalLimiter, cityController.getCities);
+router.get('/', generalLimiter, cacheMiddleware(3600), cityController.getCities);
 
 /**
  * @swagger
@@ -162,7 +163,7 @@ router.get('/', generalLimiter, cityController.getCities);
  *                     pagination:
  *                       $ref: '#/components/schemas/Pagination'
  */
-router.get('/with-reviews', generalLimiter, cityController.getCitiesWithReviews);
+router.get('/with-reviews', generalLimiter, cacheMiddleware(300), cityController.getCitiesWithReviews);
 
 /**
  * @swagger
@@ -289,7 +290,7 @@ router.get('/with-reviews', generalLimiter, cityController.getCitiesWithReviews)
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.post('/review', authenticateToken, reviewLimiter, cityController.createReview);
+router.post('/review', authenticateToken, reviewLimiter, invalidateMiddleware(['/api/cities', '/api/reviews']), cityController.createReview);
 
 /**
  * @swagger
@@ -339,7 +340,7 @@ router.post('/review', authenticateToken, reviewLimiter, cityController.createRe
  *                 pagination:
  *                   $ref: '#/components/schemas/Pagination'
  */
-router.get('/reviews', generalLimiter, cityController.getCityReviews);
+router.get('/reviews', generalLimiter, cacheMiddleware(300), cityController.getCityReviews);
 
 /**
  * @swagger
@@ -373,7 +374,7 @@ router.get('/reviews', generalLimiter, cityController.getCityReviews);
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.get('/review/:reviewId', generalLimiter, cityController.getReviewById);
+router.get('/review/:reviewId', generalLimiter, cacheMiddleware(3600), cityController.getReviewById);
 
 /**
  * @swagger
@@ -498,7 +499,7 @@ router.get('/review/:reviewId', generalLimiter, cityController.getReviewById);
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.put('/review/:reviewId', authenticateToken, generalLimiter, cityController.updateReview);
+router.put('/review/:reviewId', authenticateToken, generalLimiter, invalidateMiddleware(['/api/cities', '/api/reviews']), cityController.updateReview);
 
 /**
  * @swagger
@@ -534,7 +535,7 @@ router.put('/review/:reviewId', authenticateToken, generalLimiter, cityControlle
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.delete('/review/:reviewId', authenticateToken, generalLimiter, cityController.deleteReview);
+router.delete('/review/:reviewId', authenticateToken, generalLimiter, invalidateMiddleware(['/api/cities', '/api/reviews']), cityController.deleteReview);
 
 /**
  * @swagger
@@ -573,7 +574,7 @@ router.delete('/review/:reviewId', authenticateToken, generalLimiter, cityContro
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.get('/review/user', authenticateToken, generalLimiter, cityController.getCityReviewByUser);
+router.get('/review/user', authenticateToken, generalLimiter, cacheMiddleware({ ttl: 3600, isPrivate: true }), cityController.getCityReviewByUser);
 
 /**
  * @swagger
@@ -615,7 +616,7 @@ router.get('/review/user', authenticateToken, generalLimiter, cityController.get
  *                 pagination:
  *                   $ref: '#/components/schemas/Pagination'
  */
-router.get('/reviews/all', authenticateToken,generalLimiter, cityController.getAllCityReviews);
+router.get('/reviews/all', optionalAuth, generalLimiter, cacheMiddleware(300), cityController.getAllCityReviews);
 
 /**
  * @swagger
@@ -760,7 +761,7 @@ router.delete('/review/vote', authenticateToken, generalLimiter, cityController.
  *       200:
  *         description: City review saved successfully
  */
-router.post('/review/save', authenticateToken, generalLimiter, cityController.saveCityReview);
+router.post('/review/save', authenticateToken, generalLimiter, invalidateMiddleware(['/api/users']), cityController.saveCityReview);
 
 /**
  * @swagger
@@ -785,7 +786,7 @@ router.post('/review/save', authenticateToken, generalLimiter, cityController.sa
  *       200:
  *         description: City review unsaved successfully
  */
-router.delete('/review/save', authenticateToken, generalLimiter, cityController.unsaveCityReview);
+router.delete('/review/save', authenticateToken, generalLimiter, invalidateMiddleware(['/api/users']), cityController.unsaveCityReview);
 
 /**
  * @swagger
@@ -856,7 +857,7 @@ router.delete('/review/save', authenticateToken, generalLimiter, cityController.
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.get('/review/:id/comments', generalLimiter, optionalAuth, cityController.getCityReviewComments);
+router.get('/review/:id/comments', generalLimiter, optionalAuth, cacheMiddleware(300), cityController.getCityReviewComments);
 
 /**
  * @swagger
@@ -924,12 +925,12 @@ router.get('/review/:id/comments', generalLimiter, optionalAuth, cityController.
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.post('/review/:id/comments', authenticateToken, generalLimiter, cityController.addCityReviewComment);
+router.post('/review/:id/comments', authenticateToken, generalLimiter, invalidateMiddleware(['/api/cities', '/api/reviews']), cityController.addCityReviewComment);
 
 // New RESTful routes for city reviews ---------------------------------
-router.post('/:cityId/reviews', authenticateToken, reviewLimiter, cityController.createReview);
-router.get('/:cityId/reviews', generalLimiter, cityController.getCityReviews);
-router.get('/:cityId/review/user', authenticateToken, generalLimiter, cityController.getCityReviewByUser);
+router.post('/:cityId/reviews', authenticateToken, reviewLimiter, invalidateMiddleware(['/api/cities', '/api/reviews']), cityController.createReview);
+router.get('/:cityId/reviews', generalLimiter, cacheMiddleware(300), cityController.getCityReviews);
+router.get('/:cityId/review/user', authenticateToken, generalLimiter, cacheMiddleware({ ttl: 3600, isPrivate: true }), cityController.getCityReviewByUser);
 // ----------------------------------------------------------------------
 
 export default router; 

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import * as roomController from '../controllers/RoomController';
 import { authenticateToken, optionalAuth } from '../middleware/auth';
 import { generalLimiter, chatLimiter } from '../middleware/rateLimiter';
+import { cacheMiddleware, invalidateMiddleware } from '../middleware/cache';
 
 
 const router = Router();
@@ -73,7 +74,7 @@ const router = Router();
  *                         totalPages:
  *                           type: integer
  */
-router.get('/', generalLimiter, optionalAuth, roomController.getRooms);
+router.get('/', generalLimiter, optionalAuth, cacheMiddleware(300), roomController.getRooms);
 
 /**
  * @swagger
@@ -145,7 +146,7 @@ router.get('/', generalLimiter, optionalAuth, roomController.getRooms);
  *                         totalPages:
  *                           type: integer
  */
-router.get('/countries', generalLimiter, roomController.getCountriesStats);
+router.get('/countries', generalLimiter, cacheMiddleware(3600), roomController.getCountriesStats);
 
 /**
  * @swagger
@@ -231,7 +232,7 @@ router.get('/countries', generalLimiter, roomController.getCountriesStats);
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.get('/:id', generalLimiter, optionalAuth, roomController.getRoomById);
+router.get('/:id', generalLimiter, optionalAuth, cacheMiddleware(3600), roomController.getRoomById);
 
 /**
  * @swagger
@@ -279,7 +280,7 @@ router.get('/:id', generalLimiter, optionalAuth, roomController.getRoomById);
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  */
-router.post('/', authenticateToken, generalLimiter, roomController.createRoom);
+router.post('/', authenticateToken, generalLimiter, invalidateMiddleware(['/api/rooms']), roomController.createRoom);
 
 /**
  * @swagger
@@ -534,7 +535,7 @@ router.get('/:id/messages', authenticateToken, chatLimiter, roomController.getMe
  *                     pagination:
  *                       $ref: '#/components/schemas/Pagination'
  */
-router.get('/with-members-messages', generalLimiter, optionalAuth, roomController.getRoomsWithMembersAndMessages);
+router.get('/with-members-messages', generalLimiter, optionalAuth, cacheMiddleware(300), roomController.getRoomsWithMembersAndMessages);
 
 /**
  * @swagger

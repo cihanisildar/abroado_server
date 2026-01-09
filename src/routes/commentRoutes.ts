@@ -2,6 +2,7 @@ import { Router } from 'express';
 import * as commentController from '../controllers/CommentController';
 import { authenticateToken } from '../middleware/auth';
 import { generalLimiter } from '../middleware/rateLimiter';
+import { invalidateMiddleware } from '../middleware/cache';
 
 const router = Router();
 
@@ -50,7 +51,7 @@ const router = Router();
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.post('/:id/upvote', authenticateToken, generalLimiter, commentController.upvoteComment);
+router.post('/:id/upvote', authenticateToken, generalLimiter, invalidateMiddleware(['/api/posts']), commentController.upvoteComment);
 
 /**
  * @swagger
@@ -90,7 +91,7 @@ router.post('/:id/upvote', authenticateToken, generalLimiter, commentController.
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.post('/:id/downvote', authenticateToken, generalLimiter, commentController.downvoteComment);
+router.post('/:id/downvote', authenticateToken, generalLimiter, invalidateMiddleware(['/api/posts']), commentController.downvoteComment);
 
 /**
  * @swagger
@@ -132,7 +133,7 @@ router.post('/:id/downvote', authenticateToken, generalLimiter, commentControlle
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  */
-router.delete('/:id/vote', authenticateToken, generalLimiter, commentController.removeVote);
+router.delete('/:id/vote', authenticateToken, generalLimiter, invalidateMiddleware(['/api/posts']), commentController.removeVote);
 
 /**
  * @swagger
@@ -237,7 +238,7 @@ router.delete('/:id/vote', authenticateToken, generalLimiter, commentController.
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.put('/:id', authenticateToken, generalLimiter, commentController.updateComment);
-router.delete('/:id', authenticateToken, generalLimiter, commentController.deleteComment);
+router.put('/:id', authenticateToken, generalLimiter, invalidateMiddleware(['/api/posts']), commentController.updateComment);
+router.delete('/:id', authenticateToken, generalLimiter, invalidateMiddleware(['/api/posts']), commentController.deleteComment);
 
 export default router; 

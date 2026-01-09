@@ -2,6 +2,7 @@ import { Router } from 'express';
 import * as cityReviewCommentController from '../controllers/CityReviewCommentController';
 import { authenticateToken } from '../middleware/auth';
 import { generalLimiter } from '../middleware/rateLimiter';
+import { invalidateMiddleware } from '../middleware/cache';
 
 const router = Router();
 
@@ -50,7 +51,7 @@ const router = Router();
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.post('/:id/upvote', authenticateToken, generalLimiter, cityReviewCommentController.upvoteComment);
+router.post('/:id/upvote', authenticateToken, generalLimiter, invalidateMiddleware(['/api/cities', '/api/reviews']), cityReviewCommentController.upvoteComment);
 
 /**
  * @swagger
@@ -90,7 +91,7 @@ router.post('/:id/upvote', authenticateToken, generalLimiter, cityReviewCommentC
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.post('/:id/downvote', authenticateToken, generalLimiter, cityReviewCommentController.downvoteComment);
+router.post('/:id/downvote', authenticateToken, generalLimiter, invalidateMiddleware(['/api/cities', '/api/reviews']), cityReviewCommentController.downvoteComment);
 
 /**
  * @swagger
@@ -132,7 +133,7 @@ router.post('/:id/downvote', authenticateToken, generalLimiter, cityReviewCommen
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  */
-router.delete('/:id/vote', authenticateToken, generalLimiter, cityReviewCommentController.removeVote);
+router.delete('/:id/vote', authenticateToken, generalLimiter, invalidateMiddleware(['/api/cities', '/api/reviews']), cityReviewCommentController.removeVote);
 
 /**
  * @swagger
@@ -237,7 +238,7 @@ router.delete('/:id/vote', authenticateToken, generalLimiter, cityReviewCommentC
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.put('/:id', authenticateToken, generalLimiter, cityReviewCommentController.updateComment);
-router.delete('/:id', authenticateToken, generalLimiter, cityReviewCommentController.deleteComment);
+router.put('/:id', authenticateToken, generalLimiter, invalidateMiddleware(['/api/cities', '/api/reviews']), cityReviewCommentController.updateComment);
+router.delete('/:id', authenticateToken, generalLimiter, invalidateMiddleware(['/api/cities', '/api/reviews']), cityReviewCommentController.deleteComment);
 
 export default router; 

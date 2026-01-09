@@ -3,6 +3,7 @@ import * as postController from '../controllers/PostController';
 import { authenticateToken, optionalAuth } from '../middleware/auth';
 import { generalLimiter, postLimiter, commentLimiter } from '../middleware/rateLimiter';
 import { postImagesUpload } from '../middleware/upload';
+import { cacheMiddleware, invalidateMiddleware } from '../middleware/cache';
 
 
 const router = Router();
@@ -85,10 +86,10 @@ const router = Router();
  *                         totalPages:
  *                           type: integer
  */
-router.get('/', generalLimiter, optionalAuth, postController.getPosts);
+router.get('/', generalLimiter, optionalAuth, cacheMiddleware(300), postController.getPosts);
 
 // Countries list used in posts
-router.get('/countries', generalLimiter, postController.getCountriesStats);
+router.get('/countries', generalLimiter, cacheMiddleware(86400), postController.getCountriesStats);
 
 /**
  * @swagger
@@ -122,7 +123,7 @@ router.get('/countries', generalLimiter, postController.getCountriesStats);
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.get('/:id', generalLimiter, optionalAuth, postController.getPostById);
+router.get('/:id', generalLimiter, optionalAuth, cacheMiddleware(3600), postController.getPostById);
 
 /**
  * @swagger
@@ -230,7 +231,7 @@ router.get('/:id', generalLimiter, optionalAuth, postController.getPostById);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/', authenticateToken, postImagesUpload.array('images', 10), postLimiter, postController.createPost);
+router.post('/', authenticateToken, postLimiter, postImagesUpload.array('images', 5), invalidateMiddleware(['/api/posts', '/api/users/with-activity']), postController.createPost);
 
 /**
  * @swagger
@@ -251,7 +252,7 @@ router.post('/', authenticateToken, postImagesUpload.array('images', 10), postLi
  *       200:
  *         description: Post upvoted successfully
  */
-router.post('/:id/upvote', authenticateToken, generalLimiter, postController.upvotePost);
+router.post('/:id/upvote', authenticateToken, generalLimiter, invalidateMiddleware(['/api/posts']), postController.upvotePost);
 
 /**
  * @swagger
@@ -272,7 +273,7 @@ router.post('/:id/upvote', authenticateToken, generalLimiter, postController.upv
  *       200:
  *         description: Post downvoted successfully
  */
-router.post('/:id/downvote', authenticateToken, generalLimiter, postController.downvotePost);
+router.post('/:id/downvote', authenticateToken, generalLimiter, invalidateMiddleware(['/api/posts']), postController.downvotePost);
 
 /**
  * @swagger
@@ -293,7 +294,7 @@ router.post('/:id/downvote', authenticateToken, generalLimiter, postController.d
  *       200:
  *         description: Vote removed successfully
  */
-router.delete('/:id/vote', authenticateToken, generalLimiter, postController.removeVote);
+router.delete('/:id/vote', authenticateToken, generalLimiter, invalidateMiddleware(['/api/posts']), postController.removeVote);
 
 /**
  * @swagger
@@ -314,7 +315,7 @@ router.delete('/:id/vote', authenticateToken, generalLimiter, postController.rem
  *       200:
  *         description: Post saved successfully
  */
-router.post('/:id/save', authenticateToken, generalLimiter, postController.savePost);
+router.post('/:id/save', authenticateToken, generalLimiter, invalidateMiddleware(['/api/users']), postController.savePost);
 
 /**
  * @swagger
@@ -335,7 +336,7 @@ router.post('/:id/save', authenticateToken, generalLimiter, postController.saveP
  *       200:
  *         description: Post unsaved successfully
  */
-router.delete('/:id/save', authenticateToken, generalLimiter, postController.unsavePost);
+router.delete('/:id/save', authenticateToken, generalLimiter, invalidateMiddleware(['/api/users']), postController.unsavePost);
 
 /**
  * @swagger
@@ -406,7 +407,7 @@ router.delete('/:id/save', authenticateToken, generalLimiter, postController.uns
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.get('/:id/comments', generalLimiter, optionalAuth, postController.getPostComments);
+router.get('/:id/comments', generalLimiter, optionalAuth, cacheMiddleware(300), postController.getPostComments);
 
 /**
  * @swagger
@@ -474,7 +475,7 @@ router.get('/:id/comments', generalLimiter, optionalAuth, postController.getPost
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.post('/:id/comments', authenticateToken, generalLimiter, postController.addComment);
+router.post('/:id/comments', authenticateToken, generalLimiter, invalidateMiddleware(['/api/posts']), postController.addComment);
 
 /**
  * @swagger
@@ -557,7 +558,7 @@ router.post('/:id/comments', authenticateToken, generalLimiter, postController.a
  *                         totalPages:
  *                           type: integer
  */
-router.get('/with-comments', generalLimiter, optionalAuth, postController.getPostsWithComments);
+router.get('/with-comments', generalLimiter, optionalAuth, cacheMiddleware(300), postController.getPostsWithComments);
 
 /**
  * @swagger
@@ -671,8 +672,8 @@ router.get('/with-comments', generalLimiter, optionalAuth, postController.getPos
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.put('/:id', authenticateToken, generalLimiter, postController.updatePost);
-router.delete('/:id', authenticateToken, generalLimiter, postController.deletePost);
+router.put('/:id', authenticateToken, generalLimiter, invalidateMiddleware(['/api/posts', '/api/users/with-activity']), postController.updatePost);
+router.delete('/:id', authenticateToken, generalLimiter, invalidateMiddleware(['/api/posts', '/api/users/with-activity']), postController.deletePost);
 
 // Upload images for a post
 router.post('/:id/images', authenticateToken, postImagesUpload.array('images', 10), generalLimiter, postController.uploadImages);
