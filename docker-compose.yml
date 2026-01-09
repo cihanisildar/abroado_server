@@ -17,7 +17,9 @@ services:
     container_name: gurbetlik-gateway
     ports:
       - "80:80"
-      # - "443:443"  # Uncomment for SSL
+      - "443:443"
+    volumes:
+      - ./docker/gateway/certs:/etc/nginx/certs:ro
     depends_on:
       api:
         condition: service_healthy
