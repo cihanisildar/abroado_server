@@ -1,0 +1,78 @@
+# ============================================
+# Docker Compose - Local Development
+# ============================================
+# Usage: docker-compose -f docker-compose.dev.yml up -d
+#
+# This configuration is for local development where
+# you run the API server directly on your machine
+# but use Docker for dependencies (DB, Redis)
+
+name: gurbetlik-dev
+
+services:
+  # ==========================================
+  # PostgreSQL Database
+  # ==========================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: gurbetlik-postgres-dev
+    environment:
+      - POSTGRES_USER=gurbetlik
+      - POSTGRES_PASSWORD=localdev123
+      - POSTGRES_DB=gurbetlik
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-dev-data:/var/lib/postgresql/data
+    networks:
+      - gurbetlik-dev-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U gurbetlik -d gurbetlik" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================
+  # Redis (Optional)
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    container_name: gurbetlik-redis-dev
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-dev-data:/data
+    networks:
+      - gurbetlik-dev-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================
+  # Adminer (Database GUI - Optional)
+  # ==========================================
+  adminer:
+    image: adminer:latest
+    container_name: gurbetlik-adminer
+    ports:
+      - "8080:8080"
+    networks:
+      - gurbetlik-dev-network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    environment:
+      - ADMINER_DEFAULT_SERVER=postgres
+
+networks:
+  gurbetlik-dev-network:
+    driver: bridge
+
+volumes:
+  postgres-dev-data:
+  redis-dev-data:

@@ -1,8 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { createLogger, logError } from '../lib/logger';
 
-// Import types
-import '../types/global.d';
+// Type declarations are loaded via tsconfig.json
 
 /**
  * HTTP Request/Response Logger Middleware

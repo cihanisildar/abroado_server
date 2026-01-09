@@ -1,7 +1,7 @@
 import winston from 'winston';
 import path from 'path';
 import { requestContext } from './requestContext';
-import { LogMetadata, ILogger } from '../types/global.d';
+import type { LogMetadata, ILogger } from '../types/global';
 
 /**
  * Enterprise-grade Logger using Winston

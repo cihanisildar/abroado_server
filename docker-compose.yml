@@ -1,0 +1,130 @@
+# ============================================
+# Docker Compose - Development Configuration
+# ============================================
+# Usage: docker-compose up -d
+# Logs: docker-compose logs -f
+
+name: gurbetlik
+
+services:
+  # ==========================================
+  # API Gateway (NGINX)
+  # ==========================================
+  gateway:
+    build:
+      context: ./docker/gateway
+      dockerfile: Dockerfile
+    container_name: gurbetlik-gateway
+    ports:
+      - "80:80"
+      # - "443:443"  # Uncomment for SSL
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - gurbetlik-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/gateway/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ==========================================
+  # API Server (Express + TypeScript)
+  # ==========================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gurbetlik-api
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DATABASE_URL=postgresql://gurbetlik:${DB_PASSWORD:-changeme}@postgres:5432/gurbetlik?schema=public
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-your-refresh-secret-change-in-production}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      - COOKIE_DOMAIN=${COOKIE_DOMAIN:-localhost}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - gurbetlik-network
+    restart: unless-stopped
+    # Internal port only (accessed via gateway)
+    expose:
+      - "3001"
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ==========================================
+  # PostgreSQL Database
+  # ==========================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: gurbetlik-postgres
+    environment:
+      - POSTGRES_USER=gurbetlik
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-changeme}
+      - POSTGRES_DB=gurbetlik
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - gurbetlik-network
+    restart: unless-stopped
+    # Internal port only
+    expose:
+      - "5432"
+    # Uncomment to access DB from host
+    # ports:
+    #   - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U gurbetlik -d gurbetlik" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ==========================================
+  # Redis (Optional - for caching/sessions)
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    container_name: gurbetlik-redis
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - gurbetlik-network
+    restart: unless-stopped
+    expose:
+      - "6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+# ==========================================
+# Networks
+# ==========================================
+networks:
+  gurbetlik-network:
+    driver: bridge
+    name: gurbetlik-network
+
+# ==========================================
+# Volumes
+# ==========================================
+volumes:
+  postgres-data:
+    name: gurbetlik-postgres-data
+  redis-data:
+    name: gurbetlik-redis-data

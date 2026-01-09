@@ -1,10 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import { requestContext } from '../lib/requestContext';
-import { RequestContext } from '../types/global.d';
+import type { RequestContext } from '../types/global';
 
-// Import types (this ensures global.d.ts is loaded)
-import '../types/global.d';
+// Type declarations are loaded automatically via tsconfig.json
 
 /**
  * Request ID Middleware
