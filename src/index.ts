@@ -7,6 +7,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import dotenv from 'dotenv';
 import swaggerUi from 'swagger-ui-express';
+import { apiReference } from '@scalar/express-api-reference';
 
 // Import Prisma client from dedicated module
 import { checkDatabaseConnection, disconnectPrisma } from './lib/prisma';
@@ -155,11 +156,11 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
       imgSrc: ["'self'", "data:", "https:"],
       connectSrc: ["'self'"],
-      fontSrc: ["'self'"],
+      fontSrc: ["'self'", "https://cdn.jsdelivr.net"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
       frameSrc: ["'none'"],
@@ -203,8 +204,25 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   }
 }));
 
+// Scalar API Reference - Modern alternative to Swagger UI
+app.use('/reference', apiReference({
+  spec: {
+    content: swaggerSpec,
+  },
+  theme: 'default',
+  darkMode: true,
+  layout: 'modern',
+  showSidebar: true,
+  hideDownloadButton: false,
+  searchHotKey: 'k'
+}));
+
 // Health check endpoint
 app.get('/health', async (req, res) => {
+  /* #swagger.path = '/health'
+     #swagger.tags = ['System']
+     #swagger.summary = 'Server Health Check'
+  */
   const [dbConnected, redisConnected] = await Promise.all([
     checkDatabaseConnection(),
     checkRedisConnection()
@@ -220,12 +238,19 @@ app.get('/health', async (req, res) => {
     database: dbConnected ? 'connected' : 'disconnected',
     redis: redisConnected ? 'connected' : 'disconnected',
     websocket: 'active',
-    documentation: '/api-docs'
+    documentation: {
+      swagger: '/api-docs',
+      scalar: '/reference'
+    }
   });
 });
 
 // Debug endpoint for production troubleshooting
 app.get('/debug/env', (req, res) => {
+  /* #swagger.path = '/debug/env'
+     #swagger.tags = ['System']
+     #swagger.summary = 'Environment Debug Info'
+  */
   const envDebug = {
     NODE_ENV: process.env.NODE_ENV,
     PORT: process.env.PORT,
@@ -244,6 +269,10 @@ app.get('/debug/env', (req, res) => {
 
 // API Root - Info endpoint
 app.get('/api', cacheMiddleware(3600), (req, res) => {
+  /* #swagger.path = '/api'
+     #swagger.tags = ['System']
+     #swagger.summary = 'API Information'
+  */
   res.json({
     message: 'Gurbetci Server API',
     version: '2.0.0',

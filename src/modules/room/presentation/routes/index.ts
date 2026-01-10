@@ -1,24 +1,63 @@
 import { Router } from 'express';
 import { roomController } from '../../index';
 import { authenticateToken, optionalAuth } from '../../../../middleware/auth';
-import { generalLimiter, chatLimiter } from '../../../../middleware/rateLimiter';
 import { cacheMiddleware, invalidateMiddleware } from '../../../../middleware/cache';
 
 const router = Router();
 
-// Room list routes
-router.get('/', generalLimiter, optionalAuth, cacheMiddleware(300), roomController.getRooms);
-router.get('/with-members-messages', generalLimiter, optionalAuth, cacheMiddleware(300), roomController.getRoomsWithMembersAndMessages);
-router.get('/countries', generalLimiter, cacheMiddleware(3600), roomController.getCountriesStats);
+// Room routes
+router.get('/', optionalAuth, cacheMiddleware(300), (req, res) => {
+    /* #swagger.path = '/api/rooms'
+       #swagger.tags = ['Rooms']
+       #swagger.summary = 'Get all chat rooms'
+       #swagger.responses[200] = {
+            schema: { type: 'array', items: { $ref: '#/definitions/Room' } }
+       }
+    */
+    roomController.getRooms(req, res);
+});
 
-// Room-specific routes
-router.post('/', authenticateToken, generalLimiter, invalidateMiddleware(['/api/rooms']), roomController.createRoom);
-router.get('/:id', generalLimiter, optionalAuth, cacheMiddleware(3600), roomController.getRoomById);
-router.post('/:id/join', authenticateToken, generalLimiter, roomController.joinRoom);
-router.post('/:id/leave', authenticateToken, generalLimiter, roomController.leaveRoom);
+router.post('/', authenticateToken, invalidateMiddleware(['/api/rooms']), (req, res) => {
+    /* #swagger.path = '/api/rooms'
+       #swagger.tags = ['Rooms']
+       #swagger.summary = 'Create a new chat room'
+       #swagger.security = [{ "bearerAuth": [] }]
+       #swagger.parameters['body'] = {
+            in: 'body',
+            schema: { $ref: '#/definitions/Room' }
+       }
+    */
+    roomController.createRoom(req, res);
+});
 
-// Message routes
-router.get('/:id/messages', authenticateToken, chatLimiter, roomController.getMessages);
-router.post('/:id/messages', authenticateToken, chatLimiter, roomController.sendMessage);
+router.get('/:id', optionalAuth, cacheMiddleware(3600), (req, res) => {
+    /* #swagger.path = '/api/rooms/{id}'
+       #swagger.tags = ['Rooms']
+       #swagger.summary = 'Get chat room by ID'
+       #swagger.responses[200] = {
+            schema: { $ref: '#/definitions/Room' }
+       }
+    */
+    roomController.getRoomById(req, res);
+});
+
+// Room members
+router.post('/:id/join', authenticateToken, invalidateMiddleware(['/api/rooms']), (req, res) => {
+    /* #swagger.path = '/api/rooms/{id}/join'
+       #swagger.tags = ['Rooms']
+       #swagger.summary = 'Join a chat room'
+       #swagger.security = [{ "bearerAuth": [] }]
+    */
+    roomController.joinRoom(req, res);
+});
+
+router.post('/:id/leave', authenticateToken, invalidateMiddleware(['/api/rooms']), (req, res) => {
+    /* #swagger.path = '/api/rooms/{id}/leave'
+       #swagger.tags = ['Rooms']
+       #swagger.summary = 'Leave a chat room'
+       #swagger.security = [{ "bearerAuth": [] }]
+    */
+    roomController.leaveRoom(req, res);
+});
 
 export default router;

@@ -1,32 +1,62 @@
 import { Router } from 'express';
 import { cityReviewController } from '../../index';
 import { authenticateToken, optionalAuth } from '../../../../middleware/auth';
-import { generalLimiter } from '../../../../middleware/rateLimiter';
 import { cacheMiddleware, invalidateMiddleware } from '../../../../middleware/cache';
 
 const router = Router();
 
-// Review list routes
-router.get('/', optionalAuth, generalLimiter, cacheMiddleware(300), cityReviewController.getAllCityReviews);
-router.get('/all', optionalAuth, generalLimiter, cacheMiddleware(300), cityReviewController.getAllCityReviews); // alias
-router.get('/countries', generalLimiter, cacheMiddleware(86400), cityReviewController.getReviewCountriesStats);
+// City review routes
+router.get('/', optionalAuth, cacheMiddleware(300), (req, res) => {
+    /* #swagger.path = '/api/reviews'
+       #swagger.tags = ['Reviews']
+       #swagger.summary = 'Get all city reviews'
+       #swagger.responses[200] = {
+            schema: { type: 'array', items: { $ref: '#/definitions/CityReview' } }
+       }
+    */
+    cityReviewController.getAllCityReviews(req, res);
+});
 
-// Review-specific routes
-router.get('/:reviewId', optionalAuth, generalLimiter, cacheMiddleware(3600), cityReviewController.getReviewById);
-router.put('/:reviewId', authenticateToken, generalLimiter, invalidateMiddleware(['/api/cities', '/api/reviews']), cityReviewController.updateReview);
-router.delete('/:reviewId', authenticateToken, generalLimiter, invalidateMiddleware(['/api/cities', '/api/reviews']), cityReviewController.deleteReview);
+router.post('/', authenticateToken, invalidateMiddleware(['/api/reviews']), (req, res) => {
+    /* #swagger.path = '/api/reviews'
+       #swagger.tags = ['Reviews']
+       #swagger.summary = 'Submit a city review'
+       #swagger.security = [{ "bearerAuth": [] }]
+       #swagger.parameters['body'] = {
+            in: 'body',
+            schema: { $ref: '#/definitions/CityReview' }
+       }
+    */
+    cityReviewController.createCityReview(req, res);
+});
 
-// Review voting
-router.post('/:reviewId/upvote', authenticateToken, generalLimiter, cityReviewController.upvoteCityReview);
-router.post('/:reviewId/downvote', authenticateToken, generalLimiter, cityReviewController.downvoteCityReview);
-router.delete('/:reviewId/vote', authenticateToken, generalLimiter, cityReviewController.removeVoteFromCityReview);
+router.get('/:id', optionalAuth, cacheMiddleware(3600), (req, res) => {
+    /* #swagger.path = '/api/reviews/{id}'
+       #swagger.tags = ['Reviews']
+       #swagger.summary = 'Get city review by ID'
+       #swagger.responses[200] = {
+            schema: { $ref: '#/definitions/CityReview' }
+       }
+    */
+    cityReviewController.getReviewById(req, res);
+});
 
-// Review saving
-router.post('/:reviewId/save', authenticateToken, generalLimiter, cityReviewController.saveCityReview);
-router.delete('/:reviewId/save', authenticateToken, generalLimiter, cityReviewController.unsaveCityReview);
+router.put('/:id', authenticateToken, invalidateMiddleware(['/api/reviews']), (req, res) => {
+    /* #swagger.path = '/api/reviews/{id}'
+       #swagger.tags = ['Reviews']
+       #swagger.summary = 'Update a city review'
+       #swagger.security = [{ "bearerAuth": [] }]
+    */
+    cityReviewController.updateReview(req, res);
+});
 
-// Review comments
-router.get('/:id/comments', generalLimiter, optionalAuth, cacheMiddleware(300), cityReviewController.getCityReviewComments);
-router.post('/:id/comments', authenticateToken, generalLimiter, cityReviewController.addCityReviewComment);
+router.delete('/:id', authenticateToken, invalidateMiddleware(['/api/reviews']), (req, res) => {
+    /* #swagger.path = '/api/reviews/{id}'
+       #swagger.tags = ['Reviews']
+       #swagger.summary = 'Delete a city review'
+       #swagger.security = [{ "bearerAuth": [] }]
+    */
+    cityReviewController.deleteReview(req, res);
+});
 
 export default router;

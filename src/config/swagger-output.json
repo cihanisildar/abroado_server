@@ -1,0 +1,1855 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Gurbetci Server API",
+    "version": "2.0.0",
+    "description": "A comprehensive API for the Gurbetci platform"
+  },
+  "host": "localhost",
+  "basePath": "/",
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Authentication and Profile Management"
+    },
+    {
+      "name": "Reviews",
+      "description": "City Reviews and Ratings"
+    },
+    {
+      "name": "Users",
+      "description": "User Directory and Activity"
+    },
+    {
+      "name": "Posts",
+      "description": "Community Discussions"
+    },
+    {
+      "name": "Rooms",
+      "description": "Real-time Chat Rooms"
+    },
+    {
+      "name": "Cities",
+      "description": "Global City Database"
+    },
+    {
+      "name": "Comments",
+      "description": "Generic Comments API"
+    },
+    {
+      "name": "System",
+      "description": "Internal Server Utilities"
+    }
+  ],
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "securityDefinitions": {
+    "bearerAuth": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header",
+      "description": "JWT Authorization header using the Bearer scheme."
+    }
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Server Health Check",
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/debug/env": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Environment Debug Info",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "API Information",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "User Registration",
+        "description": "",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "description": "User details",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "example": "user@example.com"
+                },
+                "username": {
+                  "type": "string",
+                  "example": "johndoe"
+                },
+                "password": {
+                  "type": "string",
+                  "example": "password123"
+                },
+                "role": {
+                  "type": "string",
+                  "example": "EXPLORER"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/AuthResponse"
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "User Login",
+        "description": "",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "example": "user@example.com"
+                },
+                "password": {
+                  "type": "string",
+                  "example": "password123"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "$ref": "#/definitions/AuthResponse"
+            },
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Refresh Access Token",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Logout User",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/auth/profile": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Get Profile",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/AuthResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Update Profile",
+        "description": "",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/auth/google": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Initiate Google OAuth",
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/auth/google/callback": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Google OAuth Callback",
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/auth/google/status": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Get Google Auth Status",
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/auth/google/unlink": {
+      "delete": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Unlink Google Account",
+        "description": "",
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/users": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get all users",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "array"
+                },
+                "items": {
+                  "$ref": "#/definitions/User"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/with-activity": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get users with their activity",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/users/{id}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get user by ID",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Update user profile",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/users/{id}/avatar": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Upload user avatar",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "avatar",
+            "in": "formData",
+            "type": "file"
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/users/{id}/comments": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get user comments",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/users/{id}/posts": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get user posts",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/cities": {
+      "get": {
+        "tags": [
+          "Cities"
+        ],
+        "summary": "Get all cities",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "array"
+                },
+                "items": {
+                  "$ref": "#/definitions/City"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cities/countries": {
+      "get": {
+        "tags": [
+          "Cities"
+        ],
+        "summary": "Get all countries",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/posts": {
+      "get": {
+        "tags": [
+          "Posts"
+        ],
+        "summary": "Get all posts",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "array"
+                },
+                "items": {
+                  "$ref": "#/definitions/Post"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Posts"
+        ],
+        "summary": "Create a new post",
+        "description": "",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "example": "Post title"
+                },
+                "content": {
+                  "type": "string",
+                  "example": "Post content"
+                },
+                "tags": {
+                  "type": "array",
+                  "example": [
+                    "VISA",
+                    "HOUSING"
+                  ],
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/posts/{id}": {
+      "get": {
+        "tags": [
+          "Posts"
+        ],
+        "summary": "Get post by ID",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Post"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Posts"
+        ],
+        "summary": "Update a post",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Posts"
+        ],
+        "summary": "Delete a post",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/posts/{id}/upvote": {
+      "post": {
+        "tags": [
+          "Posts"
+        ],
+        "summary": "Upvote a post",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/posts/{id}/downvote": {
+      "post": {
+        "tags": [
+          "Posts"
+        ],
+        "summary": "Downvote a post",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/rooms": {
+      "get": {
+        "tags": [
+          "Rooms"
+        ],
+        "summary": "Get all chat rooms",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "array"
+                },
+                "items": {
+                  "$ref": "#/definitions/Room"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Rooms"
+        ],
+        "summary": "Create a new chat room",
+        "description": "",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/Room"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/rooms/{id}": {
+      "get": {
+        "tags": [
+          "Rooms"
+        ],
+        "summary": "Get chat room by ID",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Room"
+            }
+          }
+        }
+      }
+    },
+    "/api/rooms/{id}/join": {
+      "post": {
+        "tags": [
+          "Rooms"
+        ],
+        "summary": "Join a chat room",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/rooms/{id}/leave": {
+      "post": {
+        "tags": [
+          "Rooms"
+        ],
+        "summary": "Leave a chat room",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/comments": {
+      "get": {
+        "tags": [
+          "Comments"
+        ],
+        "summary": "Get all comments",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "array"
+                },
+                "items": {
+                  "$ref": "#/definitions/Comment"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Comments"
+        ],
+        "summary": "Post a new comment",
+        "description": "",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/Comment"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/comments/{id}": {
+      "delete": {
+        "tags": [
+          "Comments"
+        ],
+        "summary": "Delete a comment",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/reviews": {
+      "get": {
+        "tags": [
+          "Reviews"
+        ],
+        "summary": "Get all city reviews",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "array"
+                },
+                "items": {
+                  "$ref": "#/definitions/CityReview"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Reviews"
+        ],
+        "summary": "Submit a city review",
+        "description": "",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/CityReview"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/reviews/{id}": {
+      "get": {
+        "tags": [
+          "Reviews"
+        ],
+        "summary": "Get city review by ID",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/CityReview"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Reviews"
+        ],
+        "summary": "Update a city review",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Reviews"
+        ],
+        "summary": "Delete a city review",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/city-review-comments/{id}/upvote": {
+      "post": {
+        "tags": [
+          "Reviews"
+        ],
+        "summary": "Upvote a city review comment",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/city-review-comments/{id}/downvote": {
+      "post": {
+        "tags": [
+          "Reviews"
+        ],
+        "summary": "Downvote a city review comment",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/city-review-comments/{id}/vote": {
+      "delete": {
+        "tags": [
+          "Reviews"
+        ],
+        "summary": "Remove vote from city review comment",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/city-review-comments/{id}": {
+      "put": {
+        "tags": [
+          "Reviews"
+        ],
+        "summary": "Update city review comment",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "content": {
+                  "type": "string",
+                  "example": "Updated comment content"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Reviews"
+        ],
+        "summary": "Delete city review comment",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "User": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "example": "object"
+        },
+        "properties": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "string"
+                },
+                "format": {
+                  "type": "string",
+                  "example": "uuid"
+                }
+              }
+            },
+            "email": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "string"
+                },
+                "format": {
+                  "type": "string",
+                  "example": "email"
+                }
+              }
+            },
+            "username": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "string"
+                }
+              }
+            },
+            "role": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "string"
+                },
+                "enum": {
+                  "type": "array",
+                  "example": [
+                    "EXPLORER",
+                    "ABROADER"
+                  ],
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "currentCity": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "string"
+                }
+              }
+            },
+            "avatar": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Post": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "example": "object"
+        },
+        "properties": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "string"
+                },
+                "format": {
+                  "type": "string",
+                  "example": "uuid"
+                }
+              }
+            },
+            "title": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "string"
+                }
+              }
+            },
+            "content": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "string"
+                }
+              }
+            },
+            "tags": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "array"
+                },
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "likesCount": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "integer"
+                }
+              }
+            },
+            "commentsCount": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "integer"
+                }
+              }
+            },
+            "createdAt": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "string"
+                },
+                "format": {
+                  "type": "string",
+                  "example": "date-time"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Room": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "example": "object"
+        },
+        "properties": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "string"
+                },
+                "format": {
+                  "type": "string",
+                  "example": "uuid"
+                }
+              }
+            },
+            "name": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "string"
+                }
+              }
+            },
+            "description": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "string"
+                }
+              }
+            },
+            "type": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "string"
+                },
+                "enum": {
+                  "type": "array",
+                  "example": [
+                    "COUNTRY",
+                    "STUDY",
+                    "INTERVIEW",
+                    "LANGUAGE",
+                    "GENERAL"
+                  ],
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "memberCount": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "City": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "example": "object"
+        },
+        "properties": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "string"
+                },
+                "format": {
+                  "type": "string",
+                  "example": "uuid"
+                }
+              }
+            },
+            "name": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "string"
+                }
+              }
+            },
+            "country": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "string"
+                }
+              }
+            },
+            "slug": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "CityReview": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "example": "object"
+        },
+        "properties": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "string"
+                },
+                "format": {
+                  "type": "string",
+                  "example": "uuid"
+                }
+              }
+            },
+            "title": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "string"
+                }
+              }
+            },
+            "safety": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "integer"
+                },
+                "minimum": {
+                  "type": "number",
+                  "example": 1
+                },
+                "maximum": {
+                  "type": "number",
+                  "example": 5
+                }
+              }
+            },
+            "costOfLiving": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "integer"
+                },
+                "minimum": {
+                  "type": "number",
+                  "example": 1
+                },
+                "maximum": {
+                  "type": "number",
+                  "example": 5
+                }
+              }
+            },
+            "note": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Comment": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "example": "object"
+        },
+        "properties": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "string"
+                },
+                "format": {
+                  "type": "string",
+                  "example": "uuid"
+                }
+              }
+            },
+            "content": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "string"
+                }
+              }
+            },
+            "score": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "integer"
+                }
+              }
+            },
+            "createdAt": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "string"
+                },
+                "format": {
+                  "type": "string",
+                  "example": "date-time"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "AuthResponse": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "example": "object"
+        },
+        "properties": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "boolean"
+                }
+              }
+            },
+            "message": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "string"
+                }
+              }
+            },
+            "data": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "object"
+                },
+                "properties": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/definitions/User"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "ApiResponse": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "example": "object"
+        },
+        "properties": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "boolean"
+                }
+              }
+            },
+            "message": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "string"
+                }
+              }
+            },
+            "data": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
