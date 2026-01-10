@@ -21,13 +21,20 @@ import { requestIdMiddleware } from './middleware/requestId';
 import httpLoggerMiddleware from './middleware/logger';
 import { generalLimiter } from './middleware/rateLimiter';
 import { errorHandler } from './middleware/errorHandler';
+import { cacheMiddleware } from './middleware/cache';
 
-// Import routes
-import routes from './routes';
+// Import module routers
+import { authRouter } from './modules/auth';
+import { userRouter } from './modules/user';
+import { roomRouter } from './modules/room';
+import { cityRouter } from './modules/city';
+import { postRouter } from './modules/post';
+import { commentRouter } from './modules/comment';
+import { cityReviewRouter, cityReviewCommentRouter } from './modules/city-review';
 
 // Import services
-import { initializeSocket } from './services/SocketService';
-import GoogleOAuthService from './services/GoogleOAuthService';
+import { initializeSocket } from './modules/room/infrastructure/SocketService';
+import GoogleOAuthService from './modules/auth/infrastructure/GoogleOAuthService';
 
 // Import Swagger configuration
 import { swaggerSpec } from './config/swagger';
@@ -235,8 +242,42 @@ app.get('/debug/env', (req, res) => {
   res.json(envDebug);
 });
 
-// API routes
-app.use('/api', routes);
+// API Root - Info endpoint
+app.get('/api', cacheMiddleware(3600), (req, res) => {
+  res.json({
+    message: 'Gurbetci Server API',
+    version: '2.0.0',
+    endpoints: {
+      health: '/health',
+      api: '/api',
+      auth: '/api/auth',
+      users: '/api/users',
+      cities: '/api/cities',
+      posts: '/api/posts',
+      rooms: '/api/rooms',
+      reviews: '/api/reviews',
+      comments: '/api/comments'
+    },
+    features: [
+      'User Authentication (JWT + Google OAuth)',
+      'City Reviews & Ratings',
+      'Posts & Comments',
+      'Real-time Chat Rooms',
+      'User Roles (Explorer/Abroader)',
+      'WebSocket Support'
+    ]
+  });
+});
+
+// Mount module routers directly
+app.use('/api/auth', authRouter);
+app.use('/api/users', userRouter);
+app.use('/api/cities', cityRouter);
+app.use('/api/posts', postRouter);
+app.use('/api/rooms', roomRouter);
+app.use('/api/comments', commentRouter);
+app.use('/api/reviews', cityReviewRouter);
+app.use('/api/city-review-comments', cityReviewCommentRouter);
 
 // Error handling middleware
 app.use(errorHandler);

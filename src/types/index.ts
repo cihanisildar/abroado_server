@@ -37,6 +37,13 @@ export interface PostQuery {
   userId?: string;
 }
 
+export interface CityReviewQuery {
+  page?: number;
+  limit?: number;
+  cityId?: string;
+  userId?: string;
+}
+
 // Use inferred type from schema instead of manual interface
 export type { UserQuery } from './validations/query';
 
@@ -62,23 +69,34 @@ export interface RoomDto {
 export interface CityReviewDto {
   cityName: string;
   country: string;
-  title?: string | null;
+  title?: string;
   jobOpportunities: number;
   costOfLiving: number;
   safety: number;
   transport: number;
   community: number;
-  healthcare?: number | null;
-  education?: number | null;
-  nightlife?: number | null;
-  weather?: number | null;
-  internet?: number | null;
+  healthcare?: number;
+  education?: number;
+  nightlife?: number;
+  weather?: number;
+  internet?: number;
   pros?: string[];
   cons?: string[];
-  note?: string | null;
+  note?: string;
   images?: string[];
-  likes?: number;
-  language?: string | null;
+  likes?: number; // legacy
+  language?: string;
+}
+
+export type UpdateCityReviewDto = Partial<CityReviewDto>;
+
+export interface CommentDto {
+  content: string;
+  parentCommentId?: string;
+}
+
+export interface UpdateCommentDto {
+  content?: string;
 }
 
 export interface UpdateUserDto {
@@ -89,4 +107,4 @@ export interface UpdateUserDto {
   techStack?: string[];
   bio?: string;
   avatar?: string;
-} 
+}

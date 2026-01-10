@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../lib/prisma';
-import * as authService from '../services/AuthService';
+import { tokenService } from '../modules/auth';
 import { getAuthenticatedUserRole } from '../utils/authHelpers';
 
 export const authenticateToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -20,7 +20,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
   }
 
   try {
-    const decoded = authService.verifyAccessToken(token);
+    const decoded = tokenService.verifyAccessToken(token);
 
     // Fetch user from database to ensure they still exist
     const user = await prisma.user.findUnique({
@@ -65,7 +65,7 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
   }
 
   try {
-    const decoded = authService.verifyAccessToken(token);
+    const decoded = tokenService.verifyAccessToken(token);
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
       select: {
